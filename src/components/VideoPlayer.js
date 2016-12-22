@@ -29,11 +29,12 @@ export default class VideoPlayer extends React.Component {
 
   playMidiFile() {
 
-    var bufferedMIDI = this.toArrayBuffer(SampleMIDI)
-    var mf = new MIDIFile(bufferedMIDI);
-
     console.log("SampleMIDI: ", SampleMIDI)
+
+    var bufferedMIDI = this.toArrayBuffer(SampleMIDI)
     console.log("BufferedMIDI: ", bufferedMIDI)
+
+    var mf = new MIDIFile(bufferedMIDI);
     console.log("mf: ", mf)
   }
 
