@@ -1,5 +1,6 @@
 import React from 'react';
 
+import VideoPlayer from './VideoPlayer'
 export default class Home extends React.Component {
 
   constructor(props) {
@@ -11,6 +12,7 @@ export default class Home extends React.Component {
       <div>
       	
       	HOMEPAGE
+      	<VideoPlayer />
       </div>
     );
   }
