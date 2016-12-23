@@ -221,7 +221,7 @@ var silentNotes = 0;
 // combine On/Off to create a "note" object w/ pertinent information
 for(var i = 0; i < notesOn.length; i++) {
 
-	currentNoteLengthInBeats = notesOff[i].delta / midiObject.ticksPerBeat;
+	var currentNoteLengthInBeats = notesOff[i].delta / midiObject.ticksPerBeat;
 
 	// janky way to fix the duration of the first note (.99beats or something)
 	if(currentNoteLengthInBeats > 0.5 && currentNoteLengthInBeats < 1) {
