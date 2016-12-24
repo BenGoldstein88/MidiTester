@@ -154,6 +154,7 @@ export default class VideoPlayer extends React.Component {
     this.uploadFile = this.uploadFile.bind(this)
     this.doTimeout = this.doTimeout.bind(this)
     this.playNote = this.playNote.bind(this)
+    this.getMidiData = this.getMidiData.bind(this)
   }
 
   handleFileUpload(file) {
@@ -184,30 +185,24 @@ export default class VideoPlayer extends React.Component {
     this.playMidiFile(file)
   }
 
-
-  playMidiFile(file) {
-
-    var bufferedFile = this.toArrayBuffer(file)
-    var mf = new MIDIFile(bufferedFile)
-    console.log("mf: ", mf)
-
+  getMidiData(midifile) {
     // using events so far, but trackEvents allows you to specify a particular track
-    var events = mf.getMidiEvents();
-    var trackEvents = mf.getTrackEvents(1);
+    var events = midifile.getMidiEvents();
+    // var trackEvents = midifile.getTrackEvents(1);
 
     // // bools for troubleshooting
     //   var isFirst = false;
     //   var isSecond = false;
 
     // gather information found in the header of the midi file
-    var midiFormat = mf.header.getFormat();
-    var trackCount = mf.header.getTracksCount();
+    var midiFormat = midifile.header.getFormat();
+    var trackCount = midifile.header.getTracksCount();
 
-    if(mf.header.getTimeDivision() === MIDIFileHeader.TICKS_PER_BEAT) {
-      var ticksPerBeat = mf.header.getTicksPerBeat();
+    if(midifile.header.getTimeDivision() === MIDIFileHeader.TICKS_PER_BEAT) {
+      var ticksPerBeat = midifile.header.getTicksPerBeat();
     } else {
-      var SMPTEFrames = mf.header.getSMPTEFrames();
-      var ticksPerFrame = mf.header.getTicksPerFrame();
+      var SMPTEFrames = midifile.header.getSMPTEFrames();
+      var ticksPerFrame = midifile.header.getTicksPerFrame();
     }
 
     // compile the header information
@@ -307,21 +302,27 @@ export default class VideoPlayer extends React.Component {
     console.log("Total Beats: ", totalLengthInBeats)
     console.log("notes: ", notes)
 
+    return notes;
+
+  }
+
+  playMidiFile(file) {
+
+    var bufferedFile = this.toArrayBuffer(file)
+    var mf = new MIDIFile(bufferedFile)
+
+    var notesArray = this.getMidiData(mf)
 
 
 
     var that = this;
-    var timeoutTime = 0;
 
-    for(var i = 0; i < notes.length; i++) {
-      var pitch = notes[i].pitch
-      var noteStartTime = notes[i].startTime
-      console.log(pitch)
-      console.log("start timeout")
+    for(var i = 0; i < notesArray.length; i++) {
+      var pitch = notesArray[i].pitch
+      var noteStartTime = notesArray[i].startTime
 
       that.doTimeout(noteStartTime, pitch, that);
 
-      console.log("end timeout")
 
     }
   }
@@ -370,7 +371,7 @@ render() {
     <source src={sourceString} />
     </video>
 
-    <h2> {this.state.currentPitch} </h2>
+    <h2> Current Pitch: </h2> <h3> {this.state.currentPitch} </h3>
 
     <MidiFileInput uploadFile={this.uploadFile}/>
     </div>
