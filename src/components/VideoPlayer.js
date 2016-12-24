@@ -153,6 +153,7 @@ export default class VideoPlayer extends React.Component {
     this.handleFileUpload = this.handleFileUpload.bind(this)
     this.uploadFile = this.uploadFile.bind(this)
     this.doTimeout = this.doTimeout.bind(this)
+    this.playNote = this.playNote.bind(this)
   }
 
   handleFileUpload(file) {
@@ -193,9 +194,9 @@ export default class VideoPlayer extends React.Component {
     var events = mf.getMidiEvents();
     var trackEvents = mf.getTrackEvents(1);
 
-  // // bools for troubleshooting
-  //   var isFirst = false;
-  //   var isSecond = false;
+    // // bools for troubleshooting
+    //   var isFirst = false;
+    //   var isSecond = false;
 
     // gather information found in the header of the midi file
     var midiFormat = mf.header.getFormat();
@@ -279,74 +280,68 @@ export default class VideoPlayer extends React.Component {
       if(i > 0 && currentNote.startTime !== notesOff[i-1].playTime) {
 
        emptyNote = {
-        pitch: '-1',
-        pitchAsLetter: null,
-        velocity: null,
-        startTime: notesOff[i-1].playTime,
-        endTime: currentNote.startTime,
-        lengthInTicks: notesOn[i].delta,
-        lengthInBeats: notesOn[i].delta / midiObject.ticksPerBeat
+          pitch: '-1',
+          pitchAsLetter: null,
+          velocity: null,
+          startTime: notesOff[i-1].playTime,
+          endTime: currentNote.startTime,
+          lengthInTicks: notesOn[i].delta,
+          lengthInBeats: notesOn[i].delta / midiObject.ticksPerBeat
+        }
+        notes.push(emptyNote)
+        totalLengthInBeats += emptyNote.lengthInBeats;
+        silentNotes += 1;
       }
-      notes.push(emptyNote)
-      totalLengthInBeats += emptyNote.lengthInBeats;
-      silentNotes += 1;
+      notes.push(currentNote);
+      totalLengthInBeats += currentNote.lengthInBeats;
+      playedNotes += 1;
     }
-    notes.push(currentNote);
-    totalLengthInBeats += currentNote.lengthInBeats;
-    playedNotes += 1;
-
-  }
 
 
     // some info
-  console.log("Example note: \n", notes[0])
-  console.log("Total Notes: ", notes.length)
-  console.log("Total (played) Notes: ", playedNotes)
-  console.log("Total (silence) Notes: ", silentNotes)
-  console.log("Total Beats: ", totalLengthInBeats)
-  console.log("notes: ", notes)
+    console.log("Example note: \n", notes[0])
+    console.log("Total Notes: ", notes.length)
+    console.log("Total (played) Notes: ", playedNotes)
+    console.log("Total (silence) Notes: ", silentNotes)
+    console.log("Total Beats: ", totalLengthInBeats)
+    console.log("notes: ", notes)
 
 
 
-    // for(i in notes) {
-    //   // display note, then read the lengthInBeats and 'wait' for that amount of time before displaying the next note
-
-    //   // for now just represents noteLength in dashes (numBeats*4 as 1/4 beat is the smallest unit)
-
-
-    //   var numDashes = notes[i].lengthInBeats*4
-    //   var dashString = ''
-    //   for(var j = 0; j < numDashes; j++) {
-    //     dashString+='-';
-    //   }
-    //   console.log(notes[i].pitchAsLetter, dashString)
-
-
-
-    // }
 
     var that = this;
+    var timeoutTime = 0;
 
-    for(i in notes) {
-      var timeInMilliseconds = parseInt(notes[i].endTime - notes[i].startTime)
+    for(var i = 0; i < notes.length; i++) {
       var pitch = notes[i].pitch
-      // setTimeout(function() {}, timeInMilliseconds)
-      // that.doTimeout(timeInMilliseconds, that, notes[i].pitch)
       console.log(pitch)
-      that.setState({
-        currentPitch: pitch
-      })
+      console.log("start timeout")
+
+      that.doTimeout(notes[i].startTime, pitch, that);
+
+      console.log("end timeout")
 
     }
+  }
 
+playNote(pitch) {
+  this.refs.videoPlayer.pause();
+  this.setState({
+    currentPitch: pitch
+  })
+  this.refs.videoPlayer.load();
+  this.refs.videoPlayer.play();
 }
 
-doTimeout(time, component, pitch){
+doTimeout(time, pitch, component){
 
   setTimeout(function() {
         component.setState({
           currentPitch: pitch        
         })
+
+        component.playNote(pitch)
+
 
         // component.refs.videoPlayer.load();
         // component.refs.videoPlayer.play();
