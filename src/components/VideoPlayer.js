@@ -167,6 +167,7 @@ export default class VideoPlayer extends React.Component {
     file = file.replace(/\s+/g, '');
     var ab = new ArrayBuffer(file.length/2)
     var bufferedMIDI = new Uint8Array(ab)
+
     var j = 0;
     for(var i = 0; i<file.length-1; i = i+2) {
       var hexString = '0x' + file.slice(i, i+2)
@@ -314,10 +315,11 @@ export default class VideoPlayer extends React.Component {
 
     for(var i = 0; i < notes.length; i++) {
       var pitch = notes[i].pitch
+      var noteStartTime = notes[i].startTime
       console.log(pitch)
       console.log("start timeout")
 
-      that.doTimeout(notes[i].startTime, pitch, that);
+      that.doTimeout(noteStartTime, pitch, that);
 
       console.log("end timeout")
 
