@@ -327,54 +327,52 @@ export default class VideoPlayer extends React.Component {
     }
   }
 
-playNote(pitch) {
-  this.refs.videoPlayer.pause();
-  this.setState({
-    currentPitch: pitch
-  })
-  this.refs.videoPlayer.load();
-  this.refs.videoPlayer.play();
-}
-
-doTimeout(time, pitch, component){
-
-  setTimeout(function() {
-        component.setState({
-          currentPitch: pitch        
-        })
-
-        component.playNote(pitch)
-
-
-        // component.refs.videoPlayer.load();
-        // component.refs.videoPlayer.play();
-        console.log(component.state.currentPitch)
-
-  }, time)
-}
-
-
-render() {
-  let videoPlayer = null;
-  if(this.state.currentPitch === '-1') {
-    var sourceString = ''
-  } else {
-    var sourceString = "/assets/videos/" + this.state.currentPitch +".mp4"
+  playNote(pitch) {
+    this.refs.videoPlayer.pause();
+    this.setState({
+      currentPitch: pitch
+    })
+    this.refs.videoPlayer.load();
+    this.refs.videoPlayer.play();
   }
 
-  return (
-    <div>
-    <video ref={'videoPlayer'} style={{
-      height: '400px',
-      width: '400px'
-    }} controls autoPlay>
-    <source src={sourceString} />
-    </video>
+  doTimeout(time, pitch, component){
 
-    <h2> Current Pitch: </h2> <h3> {this.state.currentPitch} </h3>
+    setTimeout(function() {
+          component.setState({
+            currentPitch: pitch        
+          })
 
-    <MidiFileInput uploadFile={this.uploadFile}/>
-    </div>
+          component.playNote(pitch)
+
+
+          // component.refs.videoPlayer.load();
+          // component.refs.videoPlayer.play();
+          console.log(component.state.currentPitch)
+
+    }, time)
+  }
+
+  render() {
+    if(this.state.currentPitch === '-1') {
+      var sourceString = ''
+    } else {
+      var sourceString = "/assets/videos/" + this.state.currentPitch +".mp4"
+    }
+
+    return (
+      <div>
+        <video ref={'videoPlayer'} style={{
+          height: '400px',
+          width: '400px'
+        }} controls autoPlay>
+        <source src={sourceString} />
+        </video>
+
+        <h2> Current Pitch: </h2> <h3> {this.state.currentPitch} </h3>
+
+        <MidiFileInput uploadFile={this.uploadFile}/>
+      </div>
     );
-}
+  }
 }
