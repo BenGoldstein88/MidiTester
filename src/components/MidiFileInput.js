@@ -9,8 +9,9 @@ export default class MidiFileInput extends React.Component {
   }
 
   handleChange(e, results) {
-	results.forEach(result => {
+  results.forEach(result => {
       const [e, file] = result;
+      console.log("result: ", result)
       this.props.uploadFile(e.target.result);
       console.log(`Successfully uploaded ${file.name}!`);
     });

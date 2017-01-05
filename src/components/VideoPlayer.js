@@ -16,7 +16,10 @@ export default class VideoPlayer extends React.Component {
 
     this.state = {
       file: null,
-      currentPitch: '-1',
+      currentPitch0: '-1',
+      currentPitch2: '-1',
+      currentPitch3: '-1',
+      playerCounter: 0,
       noteHash: {
         0: "C-2",
         1: "C#/Db-2",
@@ -154,7 +157,8 @@ export default class VideoPlayer extends React.Component {
     this.uploadFile = this.uploadFile.bind(this)
     this.doTimeout = this.doTimeout.bind(this)
     this.playNote = this.playNote.bind(this)
-    this.getMidiData = this.getMidiData.bind(this)
+    // this.getMidiData = this.getMidiData.bind(this)
+    this.getPolyphonicMidiData = this.getPolyphonicMidiData.bind(this)
   }
 
   handleFileUpload(file) {
@@ -163,7 +167,7 @@ export default class VideoPlayer extends React.Component {
     })
   }
 
-  // because Array Buffers!
+  // rewritten ArrayBuffer method that seems to work with .mid files NOT containing additional metadata
   toArrayBuffer(file) {
     file = file.replace(/\s+/g, '');
     var ab = new ArrayBuffer(file.length/2)
@@ -185,15 +189,9 @@ export default class VideoPlayer extends React.Component {
     this.playMidiFile(file)
   }
 
-  getMidiData(midifile) {
-    // using events so far, but trackEvents allows you to specify a particular track
+  formatMidiObject(midifile) {
+
     var events = midifile.getMidiEvents();
-    // var trackEvents = midifile.getTrackEvents(1);
-
-    // // bools for troubleshooting
-    //   var isFirst = false;
-    //   var isSecond = false;
-
     // gather information found in the header of the midi file
     var midiFormat = midifile.header.getFormat();
     var trackCount = midifile.header.getTracksCount();
@@ -211,112 +209,192 @@ export default class VideoPlayer extends React.Component {
       trackCount: trackCount,
       ticksPerBeat: ticksPerBeat || null,
       SMPTEFrames: SMPTEFrames || null,
-      ticksPerFrame: ticksPerFrame || null
+      ticksPerFrame: ticksPerFrame || null,
+      events: events
     }
 
 
     console.log("midiObject: ", midiObject)
 
-    // seperate the noteOns from the noteOffs, then combine them into 'notes' 
+    return midiObject
+
+  }
+
+  getPolyphonicMidiData(midifile) {
+
+    var midiObject = this.formatMidiObject(midifile)
+    var events = midiObject.events
+
     var notesOn = [];
     var notesOff = [];
+    var currentNote = {};
+    var currentChannel = events[0].channel
 
     for(i in events) {
 
+      // determine whether event is noteOn or noteOff
+      // associate each noteOn with the first noteOff that shares the same param1
+      // create note objects
       // noteOn
-      if(events[i].subtype == 9 && events[i].channel == 1) {
-        // if(isFirst === false) {
-        //   console.log("First (9): ", events[i])
-        // }
-        // isFirst = true
+      if(events[i].subtype == 9 && events[i].channel == currentChannel) {
         notesOn.push(events[i])
       }
 
 
       // noteOff
-      if(events[i].subtype == 8 && events[i].channel == 1) {
-        // if(isSecond === false) {
-        //   console.log("First (8): ", events[i])
-        // }
-        // isSecond = true
+      if(events[i].subtype == 8 && events[i].channel == currentChannel) {
         notesOff.push(events[i])
       }
 
     }
 
     var notes = [];
-    var currentNote = {};
-    var emptyNote = {};
-    var totalLengthInBeats = 0;
-    var playedNotes = 0;
-    var silentNotes = 0;
 
-    // combine On/Off to create a "note" object w/ pertinent information
     for(var i = 0; i < notesOn.length; i++) {
+      var correspondingNoteOff = notesOff.find(function(noteOff) {        
+        return noteOff.param1 == notesOn[i].param1
+      })
 
-      var currentNoteLengthInBeats = notesOff[i].delta / midiObject.ticksPerBeat;
+      var noteOffIndex = notesOff.indexOf(correspondingNoteOff);
 
-      // janky way to fix the duration of the first note (.99beats or something)
-      if(currentNoteLengthInBeats > 0.5 && currentNoteLengthInBeats < 1) {
-        currentNoteLengthInBeats = Math.round(currentNoteLengthInBeats)
+      if (noteOffIndex > -1) {
+        notesOff.splice(noteOffIndex, 1)
       }
 
-      // consolidate information on the current note from both notesOn and notesOff arrays
+
+    // consolidate information on the current note from both notesOn and notesOff arrays
       currentNote = {
         pitch: notesOn[i].param1,
         pitchAsLetter: this.state.noteHash[notesOn[i].param1],
         velocity: notesOn[i].param2,
         startTime: notesOn[i].playTime,
-        endTime: notesOff[i].playTime,
-        lengthInTicks: notesOff[i].delta,
-        lengthInBeats: currentNoteLengthInBeats
+        endTime: correspondingNoteOff.playTime,
+        lengthInTicks: correspondingNoteOff.delta,
+        // lengthInBeats: currentNoteLengthInBeats
       }
 
-      // deal with empty spaces between notes (which I'm currently treating as notes w/o pitch & velocity)
-      if(i > 0 && currentNote.startTime !== notesOff[i-1].playTime) {
-
-       emptyNote = {
-          pitch: '-1',
-          pitchAsLetter: null,
-          velocity: null,
-          startTime: notesOff[i-1].playTime,
-          endTime: currentNote.startTime,
-          lengthInTicks: notesOn[i].delta,
-          lengthInBeats: notesOn[i].delta / midiObject.ticksPerBeat
-        }
-        notes.push(emptyNote)
-        totalLengthInBeats += emptyNote.lengthInBeats;
-        silentNotes += 1;
-      }
-      notes.push(currentNote);
-      totalLengthInBeats += currentNote.lengthInBeats;
-      playedNotes += 1;
+      notes.push(currentNote)
     }
 
-
-    // some info
-    console.log("Example note: \n", notes[0])
-    console.log("Total Notes: ", notes.length)
-    console.log("Total (played) Notes: ", playedNotes)
-    console.log("Total (silence) Notes: ", silentNotes)
-    console.log("Total Beats: ", totalLengthInBeats)
     console.log("notes: ", notes)
-
     return notes;
 
   }
+
+  // getMidiData(midifile) {
+
+  //   var midiObject = this.formatMidiObject(midifile)
+  //   console.log(midiObject)
+  //   var events = midiObject.events
+
+  //   // seperate the noteOns from the noteOffs, then combine them into 'notes' 
+  //   var notesOn = [];
+  //   var notesOff = [];
+
+  //   console.log("events: ", events)
+
+  //   for(i in events) {
+
+  //     // noteOn
+  //     if(events[i].subtype == 9 && events[i].channel == 1) {
+  //       // if(isFirst === false) {
+  //       //   console.log("First (9): ", events[i])
+  //       // }
+  //       // isFirst = true
+  //       notesOn.push(events[i])
+  //     }
+
+
+  //     // noteOff
+  //     if(events[i].subtype == 8 && events[i].channel == 1) {
+  //       // if(isSecond === false) {
+  //       //   console.log("First (8): ", events[i])
+  //       // }
+  //       // isSecond = true
+  //       notesOff.push(events[i])
+  //     }
+
+  //   }
+
+  //   var notes = [];
+  //   var currentNote = {};
+  //   var emptyNote = {};
+  //   var totalLengthInBeats = 0;
+  //   var playedNotes = 0;
+  //   var silentNotes = 0;
+
+  //   // combine On/Off to create a "note" object w/ pertinent information
+  //   for(var i = 0; i < notesOn.length; i++) {
+
+  //     var currentNoteLengthInBeats = notesOff[i].delta / midiObject.ticksPerBeat;
+
+  //     // janky way to fix the duration of the first note (.99beats or something)
+  //     if(currentNoteLengthInBeats > 0.5 && currentNoteLengthInBeats < 1) {
+  //       currentNoteLengthInBeats = Math.round(currentNoteLengthInBeats)
+  //     }
+
+  //     // consolidate information on the current note from both notesOn and notesOff arrays
+  //     currentNote = {
+  //       pitch: notesOn[i].param1,
+  //       pitchAsLetter: this.state.noteHash[notesOn[i].param1],
+  //       velocity: notesOn[i].param2,
+  //       startTime: notesOn[i].playTime,
+  //       endTime: notesOff[i].playTime,
+  //       lengthInTicks: notesOff[i].delta,
+  //       lengthInBeats: currentNoteLengthInBeats
+  //     }
+
+  //     // deal with empty spaces between notes (which I'm currently treating as notes w/o pitch & velocity)
+  //     if(i > 0 && currentNote.startTime !== notesOff[i-1].playTime) {
+
+  //      emptyNote = {
+  //         pitch: '-1',
+  //         pitchAsLetter: null,
+  //         velocity: null,
+  //         startTime: notesOff[i-1].playTime,
+  //         endTime: currentNote.startTime,
+  //         lengthInTicks: notesOn[i].delta,
+  //         lengthInBeats: notesOn[i].delta / midiObject.ticksPerBeat
+  //       }
+  //       notes.push(emptyNote)
+  //       totalLengthInBeats += emptyNote.lengthInBeats;
+  //       silentNotes += 1;
+  //     }
+  //     notes.push(currentNote);
+  //     totalLengthInBeats += currentNote.lengthInBeats;
+  //     playedNotes += 1;
+  //   }
+
+
+  //   // some info
+  //   console.log("Example note: \n", notes[0])
+  //   console.log("Total Notes: ", notes.length)
+  //   console.log("Total (played) Notes: ", playedNotes)
+  //   console.log("Total (silence) Notes: ", silentNotes)
+  //   console.log("Total Beats: ", totalLengthInBeats)
+  //   console.log("notes: ", notes)
+
+  //   return notes;
+
+  // }
 
   playMidiFile(file) {
 
     var bufferedFile = this.toArrayBuffer(file)
     var mf = new MIDIFile(bufferedFile)
 
-    var notesArray = this.getMidiData(mf)
 
+    var notesArray;
+    console.log("FILE: ", file)
+    // if(file.name == "SingleTrackPolyphonyTest.mid") {
+    //   console.log("working...")
+    notesArray = this.getPolyphonicMidiData(mf)
+    // } else {
+    //   notesArray = this.getMidiData(mf)
+    // }
 
 
     var that = this;
-
     for(var i = 0; i < notesArray.length; i++) {
       var pitch = notesArray[i].pitch
       var noteStartTime = notesArray[i].startTime
@@ -327,10 +405,12 @@ export default class VideoPlayer extends React.Component {
     }
   }
 
-  playNote(pitch) {
+
+
+  playNote(pitch) {    
     this.refs.videoPlayer.pause();
     this.setState({
-      currentPitch: pitch
+      currentPitch0: pitch
     })
     this.refs.videoPlayer.load();
     this.refs.videoPlayer.play();
@@ -338,9 +418,11 @@ export default class VideoPlayer extends React.Component {
 
   doTimeout(time, pitch, component){
 
+
     setTimeout(function() {
+
           component.setState({
-            currentPitch: pitch        
+            currentPitch0: pitch        
           })
 
           component.playNote(pitch)
@@ -348,16 +430,22 @@ export default class VideoPlayer extends React.Component {
 
           // component.refs.videoPlayer.load();
           // component.refs.videoPlayer.play();
-          console.log(component.state.currentPitch)
+          console.log(component.state.currentPitch0)
 
     }, time)
   }
 
   render() {
-    if(this.state.currentPitch === '-1') {
-      var sourceString = ''
+    if(this.state.currentPitch0 === '-1') {
+      var sourceString = '';
+
+
     } else {
-      var sourceString = "/assets/videos/" + this.state.currentPitch +".mp4"
+      var sourceString = "/assets/videos/" + this.state.currentPitch0 +".mp4"
+      // var sourceString2 = "/assets/videos/" + this.state.currentPitch2 +".mp4"
+      // var sourceString3 = "/assets/videos/" + this.state.currentPitch3 +".mp4"
+
+
     }
 
     return (
@@ -366,10 +454,23 @@ export default class VideoPlayer extends React.Component {
           height: '400px',
           width: '400px'
         }} controls autoPlay>
-        <source src={sourceString} />
+          <source src={sourceString} />
+        </video>
+        <video ref={'videoPlayer2'} style={{
+          height: '400px',
+          width: '400px'
+        }} controls autoPlay>
+          <source src={sourceString} />
+        </video>
+        <video ref={'videoPlayer3'} style={{
+          height: '400px',
+          width: '400px'
+        }} controls autoPlay>
+          <source src={sourceString} />
         </video>
 
-        <h2> Current Pitch: </h2> <h3> {this.state.currentPitch} </h3>
+
+        <h2> Current Pitch: </h2> <h3> {this.state.currentPitch0} </h3>
 
         <MidiFileInput uploadFile={this.uploadFile}/>
       </div>

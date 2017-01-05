@@ -17,7 +17,6 @@ export default class MidiDropZone extends React.Component {
       // })
 
       this.props.onFileUpload(acceptedFiles[0])
-      console.log("props: ", this.props)
     }
 
   render() {
