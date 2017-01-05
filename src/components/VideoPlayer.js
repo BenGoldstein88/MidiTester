@@ -17,8 +17,8 @@ export default class VideoPlayer extends React.Component {
     this.state = {
       file: null,
       currentPitch0: '-1',
+      currentPitch1: '-1',
       currentPitch2: '-1',
-      currentPitch3: '-1',
       playerCounter: 0,
       noteHash: {
         0: "C-2",
@@ -407,13 +407,23 @@ export default class VideoPlayer extends React.Component {
 
 
 
-  playNote(pitch) {    
-    this.refs.videoPlayer.pause();
+  playNote(pitch) {
+    var currentPlayer = "videoPlayer" + this.state.playerCounter
+    var newCount = (this.state.playerCounter + 1) % 3
+    console.log("newCount: ", newCount)
+
+
+    this.setState({
+      playerCounter: newCount
+    })
+
+
+    this.refs[currentPlayer].pause();
     this.setState({
       currentPitch0: pitch
     })
-    this.refs.videoPlayer.load();
-    this.refs.videoPlayer.play();
+    this.refs[currentPlayer].load();
+    this.refs[currentPlayer].play();
   }
 
   doTimeout(time, pitch, component){
@@ -424,14 +434,16 @@ export default class VideoPlayer extends React.Component {
           component.setState({
             currentPitch0: pitch        
           })
+          while(pitch < 46) {
+            pitch += 12
+
+          }
+
+          while(pitch > 70) {
+            pitch -= 12
+          }
 
           component.playNote(pitch)
-
-
-          // component.refs.videoPlayer.load();
-          // component.refs.videoPlayer.play();
-          console.log(component.state.currentPitch0)
-
     }, time)
   }
 
@@ -442,27 +454,27 @@ export default class VideoPlayer extends React.Component {
 
     } else {
       var sourceString = "/assets/videos/" + this.state.currentPitch0 +".mp4"
-      // var sourceString2 = "/assets/videos/" + this.state.currentPitch2 +".mp4"
-      // var sourceString3 = "/assets/videos/" + this.state.currentPitch3 +".mp4"
+      // var sourceString2 = "/assets/videos/" + this.state.currentPitch1 +".mp4"
+      // var sourceString3 = "/assets/videos/" + this.state.currentPitch2 +".mp4"
 
 
     }
 
     return (
       <div>
-        <video ref={'videoPlayer'} style={{
+        <video ref={'videoPlayer0'} style={{
+          height: '400px',
+          width: '400px'
+        }} controls autoPlay>
+          <source src={sourceString} />
+        </video>
+        <video ref={'videoPlayer1'} style={{
           height: '400px',
           width: '400px'
         }} controls autoPlay>
           <source src={sourceString} />
         </video>
         <video ref={'videoPlayer2'} style={{
-          height: '400px',
-          width: '400px'
-        }} controls autoPlay>
-          <source src={sourceString} />
-        </video>
-        <video ref={'videoPlayer3'} style={{
           height: '400px',
           width: '400px'
         }} controls autoPlay>
