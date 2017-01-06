@@ -1,11 +1,28 @@
 import React from 'react';
 
-import VideoPlayer from './VideoPlayer'
-import MidiFileInput from './MidiFileInput'
+import VideoPlayerGrid from './VideoPlayerGrid';
+
+import MidiFileInput from './MidiFileInput';
+
 export default class Home extends React.Component {
 
   constructor(props) {
     super(props);
+
+    this.state = {
+      file: null
+    }
+
+    this.uploadFile = this.uploadFile.bind(this)
+
+  }
+
+  uploadFile(file) {
+
+    this.setState({
+      file: file
+    })
+    
   }
 
   render() {
@@ -13,7 +30,8 @@ export default class Home extends React.Component {
       <div>
       	
       	HOMEPAGE
-      	<VideoPlayer />
+      	<VideoPlayerGrid file={this.state.file} />
+        <MidiFileInput uploadFile={this.uploadFile} />
       </div>
     );
   }

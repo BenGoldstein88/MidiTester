@@ -1,12 +1,4 @@
 import React from 'react';
-// import MIDIFile from '../midistuff/MIDIFile';
-import MIDIFileHeader from '../midistuff/MIDIFileHeader';
-import MIDIFile from 'midifile'
-// import FileUploadInput from './FileUploadInput'
-import MidiDropZone from './MidiDropZone'
-import MidiFileInput from './MidiFileInput'
-import SampleMIDI from '../assets/sounds/twinkle.mid';
-import axios from 'axios';
 
 export default class VideoPlayer extends React.Component {
 
@@ -15,11 +7,7 @@ export default class VideoPlayer extends React.Component {
     super(props);
 
     this.state = {
-      file: null,
-      currentPitch0: '-1',
-      currentPitch1: '-1',
-      currentPitch2: '-1',
-      playerCounter: 0,
+      currentPitch: '-1',
       noteHash: {
         0: "C-2",
         1: "C#/Db-2",
@@ -151,289 +139,35 @@ export default class VideoPlayer extends React.Component {
         127: "G8"
       }
     }
-    this.playMidiFile = this.playMidiFile.bind(this)
-    this.toArrayBuffer = this.toArrayBuffer.bind(this)
-    this.handleFileUpload = this.handleFileUpload.bind(this)
-    this.uploadFile = this.uploadFile.bind(this)
     this.doTimeout = this.doTimeout.bind(this)
     this.playNote = this.playNote.bind(this)
-    // this.getMidiData = this.getMidiData.bind(this)
-    this.getPolyphonicMidiData = this.getPolyphonicMidiData.bind(this)
+    this.stopPlayerWithTimeout = this.stopPlayerWithTimeout.bind(this)
   }
 
-  handleFileUpload(file) {
-    this.setState({
-      file: file
-    })
+
+
+  stopPlayerWithTimeout(time) {
+    setTimeout(function() {
+        this.refs.videoPlayer.pause()
+    }, time)
   }
-
-  // rewritten ArrayBuffer method that seems to work with .mid files NOT containing additional metadata
-  toArrayBuffer(file) {
-    file = file.replace(/\s+/g, '');
-    var ab = new ArrayBuffer(file.length/2)
-    var bufferedMIDI = new Uint8Array(ab)
-
-    var j = 0;
-    for(var i = 0; i<file.length-1; i = i+2) {
-      var hexString = '0x' + file.slice(i, i+2)
-      var hexByte = parseInt(hexString)
-
-      // console.log(hexByte, typeof hexByte)
-      bufferedMIDI[j] = hexByte
-      j = j + 1;
-    }
-    return ab;
-  }
-
-  uploadFile(file) {
-    this.playMidiFile(file)
-  }
-
-  formatMidiObject(midifile) {
-
-    var events = midifile.getMidiEvents();
-    // gather information found in the header of the midi file
-    var midiFormat = midifile.header.getFormat();
-    var trackCount = midifile.header.getTracksCount();
-
-    if(midifile.header.getTimeDivision() === MIDIFileHeader.TICKS_PER_BEAT) {
-      var ticksPerBeat = midifile.header.getTicksPerBeat();
-    } else {
-      var SMPTEFrames = midifile.header.getSMPTEFrames();
-      var ticksPerFrame = midifile.header.getTicksPerFrame();
-    }
-
-    // compile the header information
-    var midiObject = {
-      midiFormat: midiFormat,
-      trackCount: trackCount,
-      ticksPerBeat: ticksPerBeat || null,
-      SMPTEFrames: SMPTEFrames || null,
-      ticksPerFrame: ticksPerFrame || null,
-      events: events
-    }
-
-
-    console.log("midiObject: ", midiObject)
-
-    return midiObject
-
-  }
-
-  getPolyphonicMidiData(midifile) {
-
-    var midiObject = this.formatMidiObject(midifile)
-    var events = midiObject.events
-
-    var notesOn = [];
-    var notesOff = [];
-    var currentNote = {};
-    var currentChannel = events[0].channel
-
-    for(i in events) {
-
-      // determine whether event is noteOn or noteOff
-      // associate each noteOn with the first noteOff that shares the same param1
-      // create note objects
-      // noteOn
-      if(events[i].subtype == 9 && events[i].channel == currentChannel) {
-        notesOn.push(events[i])
-      }
-
-
-      // noteOff
-      if(events[i].subtype == 8 && events[i].channel == currentChannel) {
-        notesOff.push(events[i])
-      }
-
-    }
-
-    var notes = [];
-
-    for(var i = 0; i < notesOn.length; i++) {
-      var correspondingNoteOff = notesOff.find(function(noteOff) {        
-        return noteOff.param1 == notesOn[i].param1
-      })
-
-      var noteOffIndex = notesOff.indexOf(correspondingNoteOff);
-
-      if (noteOffIndex > -1) {
-        notesOff.splice(noteOffIndex, 1)
-      }
-
-
-    // consolidate information on the current note from both notesOn and notesOff arrays
-      currentNote = {
-        pitch: notesOn[i].param1,
-        pitchAsLetter: this.state.noteHash[notesOn[i].param1],
-        velocity: notesOn[i].param2,
-        startTime: notesOn[i].playTime,
-        endTime: correspondingNoteOff.playTime,
-        lengthInTicks: correspondingNoteOff.delta,
-        // lengthInBeats: currentNoteLengthInBeats
-      }
-
-      notes.push(currentNote)
-    }
-
-    console.log("notes: ", notes)
-    return notes;
-
-  }
-
-  // getMidiData(midifile) {
-
-  //   var midiObject = this.formatMidiObject(midifile)
-  //   console.log(midiObject)
-  //   var events = midiObject.events
-
-  //   // seperate the noteOns from the noteOffs, then combine them into 'notes' 
-  //   var notesOn = [];
-  //   var notesOff = [];
-
-  //   console.log("events: ", events)
-
-  //   for(i in events) {
-
-  //     // noteOn
-  //     if(events[i].subtype == 9 && events[i].channel == 1) {
-  //       // if(isFirst === false) {
-  //       //   console.log("First (9): ", events[i])
-  //       // }
-  //       // isFirst = true
-  //       notesOn.push(events[i])
-  //     }
-
-
-  //     // noteOff
-  //     if(events[i].subtype == 8 && events[i].channel == 1) {
-  //       // if(isSecond === false) {
-  //       //   console.log("First (8): ", events[i])
-  //       // }
-  //       // isSecond = true
-  //       notesOff.push(events[i])
-  //     }
-
-  //   }
-
-  //   var notes = [];
-  //   var currentNote = {};
-  //   var emptyNote = {};
-  //   var totalLengthInBeats = 0;
-  //   var playedNotes = 0;
-  //   var silentNotes = 0;
-
-  //   // combine On/Off to create a "note" object w/ pertinent information
-  //   for(var i = 0; i < notesOn.length; i++) {
-
-  //     var currentNoteLengthInBeats = notesOff[i].delta / midiObject.ticksPerBeat;
-
-  //     // janky way to fix the duration of the first note (.99beats or something)
-  //     if(currentNoteLengthInBeats > 0.5 && currentNoteLengthInBeats < 1) {
-  //       currentNoteLengthInBeats = Math.round(currentNoteLengthInBeats)
-  //     }
-
-  //     // consolidate information on the current note from both notesOn and notesOff arrays
-  //     currentNote = {
-  //       pitch: notesOn[i].param1,
-  //       pitchAsLetter: this.state.noteHash[notesOn[i].param1],
-  //       velocity: notesOn[i].param2,
-  //       startTime: notesOn[i].playTime,
-  //       endTime: notesOff[i].playTime,
-  //       lengthInTicks: notesOff[i].delta,
-  //       lengthInBeats: currentNoteLengthInBeats
-  //     }
-
-  //     // deal with empty spaces between notes (which I'm currently treating as notes w/o pitch & velocity)
-  //     if(i > 0 && currentNote.startTime !== notesOff[i-1].playTime) {
-
-  //      emptyNote = {
-  //         pitch: '-1',
-  //         pitchAsLetter: null,
-  //         velocity: null,
-  //         startTime: notesOff[i-1].playTime,
-  //         endTime: currentNote.startTime,
-  //         lengthInTicks: notesOn[i].delta,
-  //         lengthInBeats: notesOn[i].delta / midiObject.ticksPerBeat
-  //       }
-  //       notes.push(emptyNote)
-  //       totalLengthInBeats += emptyNote.lengthInBeats;
-  //       silentNotes += 1;
-  //     }
-  //     notes.push(currentNote);
-  //     totalLengthInBeats += currentNote.lengthInBeats;
-  //     playedNotes += 1;
-  //   }
-
-
-  //   // some info
-  //   console.log("Example note: \n", notes[0])
-  //   console.log("Total Notes: ", notes.length)
-  //   console.log("Total (played) Notes: ", playedNotes)
-  //   console.log("Total (silence) Notes: ", silentNotes)
-  //   console.log("Total Beats: ", totalLengthInBeats)
-  //   console.log("notes: ", notes)
-
-  //   return notes;
-
-  // }
-
-  playMidiFile(file) {
-
-    var bufferedFile = this.toArrayBuffer(file)
-    var mf = new MIDIFile(bufferedFile)
-
-
-    var notesArray;
-    console.log("FILE: ", file)
-    // if(file.name == "SingleTrackPolyphonyTest.mid") {
-    //   console.log("working...")
-    notesArray = this.getPolyphonicMidiData(mf)
-    // } else {
-    //   notesArray = this.getMidiData(mf)
-    // }
-
-
-    var that = this;
-    for(var i = 0; i < notesArray.length; i++) {
-      var pitch = notesArray[i].pitch
-      var noteStartTime = notesArray[i].startTime
-
-      that.doTimeout(noteStartTime, pitch, that);
-
-
-    }
-  }
-
 
 
   playNote(pitch) {
-    var currentPlayer = "videoPlayer" + this.state.playerCounter
-    var newCount = (this.state.playerCounter + 1) % 3
-    console.log("newCount: ", newCount)
 
-
+    this.refs.videoPlayer.pause();
     this.setState({
-      playerCounter: newCount
+      currentPitch: pitch
     })
-
-
-    this.refs[currentPlayer].pause();
-    this.setState({
-      currentPitch0: pitch
-    })
-    this.refs[currentPlayer].load();
-    this.refs[currentPlayer].play();
+    this.refs.videoPlayer.load();
+    this.refs.videoPlayer.play();
   }
 
-  doTimeout(time, pitch, component){
+  doTimeout(time, pitch, component) {
 
 
     setTimeout(function() {
 
-          component.setState({
-            currentPitch0: pitch        
-          })
           while(pitch < 46) {
             pitch += 12
 
@@ -448,44 +182,23 @@ export default class VideoPlayer extends React.Component {
   }
 
   render() {
-    if(this.state.currentPitch0 === '-1') {
+    if(this.state.currentPitch === '-1') {
       var sourceString = '';
 
 
     } else {
-      var sourceString = "/assets/videos/" + this.state.currentPitch0 +".mp4"
-      // var sourceString2 = "/assets/videos/" + this.state.currentPitch1 +".mp4"
-      // var sourceString3 = "/assets/videos/" + this.state.currentPitch2 +".mp4"
-
+      var sourceString = "/assets/videos/" + this.state.currentPitch +".mp4"
 
     }
 
     return (
-      <div>
-        <video ref={'videoPlayer0'} style={{
+
+        <video ref={'videoPlayer'} style={{
           height: '400px',
           width: '400px'
         }} controls autoPlay>
           <source src={sourceString} />
         </video>
-        <video ref={'videoPlayer1'} style={{
-          height: '400px',
-          width: '400px'
-        }} controls autoPlay>
-          <source src={sourceString} />
-        </video>
-        <video ref={'videoPlayer2'} style={{
-          height: '400px',
-          width: '400px'
-        }} controls autoPlay>
-          <source src={sourceString} />
-        </video>
-
-
-        <h2> Current Pitch: </h2> <h3> {this.state.currentPitch0} </h3>
-
-        <MidiFileInput uploadFile={this.uploadFile}/>
-      </div>
     );
   }
 }
