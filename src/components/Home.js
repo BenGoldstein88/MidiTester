@@ -1,6 +1,5 @@
 import React from 'react';
-
-import VideoPlayerGrid from './VideoPlayerGrid';
+import Conductor from './Conductor';
 
 import MidiFileInput from './MidiFileInput';
 
@@ -30,7 +29,7 @@ export default class Home extends React.Component {
       <div>
       	
       	HOMEPAGE
-      	<VideoPlayerGrid file={this.state.file} />
+      	<Conductor />
         <MidiFileInput uploadFile={this.uploadFile} />
       </div>
     );
