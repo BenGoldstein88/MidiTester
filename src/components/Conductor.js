@@ -1,5 +1,8 @@
 import React from 'react';
 import VideoPlayerGrid from './VideoPlayerGrid';
+import VideoPlayer from './VideoPlayer';
+import MIDIFileHeader from '../midistuff/MIDIFileHeader';
+import MIDIFile from 'midifile';
 
 export default class Conductor extends React.Component {
 
@@ -7,12 +10,158 @@ export default class Conductor extends React.Component {
   constructor(props) {
     super(props);
 
-    this.loadNote = this.loadNote.bind(this)
+    this.state = {
+    	playing: [false],
+    	playerCounter: 0,
+		  numRows: 3,
+	   	playersPerRow: 3,
+	    pitchHash: {},
+	    players: [],
+    	noteHash: {
+	        0: "C-2",
+	        1: "C#/Db-2",
+	        2: "D-2",
+	        3: "D#/Eb-2",
+	        4: "E-2",
+	        5: "F-2",
+	        6: "F#/Gb-2",
+	        7: "G-2",
+	        8: "G#/Ab-2",
+	        9: "A-2",
+	        10: "A#/Bb-2",
+	        11: "B-2",
+	        12: "C-1",
+	        13: "C#/Db-1",
+	        14: "D-1",
+	        15: "D#/Eb-1",
+	        16: "E-1",
+	        17: "F-1",
+	        18: "F#/Gb-1",
+	        19: "G-1",
+	        20: "G#/Ab-1",
+	        21: "A-1",
+	        22: "A#/Bb-1",
+	        23: "B-1",
+	        24: "C0",
+	        25: "C#/Db0",
+	        26: "D0",
+	        27: "D#/Eb0",
+	        28: "E0",
+	        29: "F0",
+	        30: "F#/Gb0",
+	        31: "G0",
+	        32: "G#/Ab0",
+	        33: "A0",
+	        34: "A#/Bb0",
+	        35: "B0",
+	        36: "C1",
+	        37: "C#/Db1",
+	        38: "D1",
+	        39: "D#/Eb1",
+	        40: "E1",
+	        41: "F1",
+	        42: "F#/Gb1",
+	        43: "G1",
+	        44: "G#/Ab1",
+	        45: "A1",
+	        46: "A#/Bb1",
+	        47: "B1",
+	        48: "C2",
+	        49: "C#/Db2",
+	        50: "D2",
+	        51: "D#/Eb2",
+	        52: "E2",
+	        53: "F2",
+	        54: "F#/Gb2",
+	        55: "G2",
+	        56: "G#/Ab2",
+	        57: "A2",
+	        58: "A#/Bb2",
+	        59: "B2",
+	        60: "C3",
+	        61: "C#/Db3",
+	        62: "D3",
+	        63: "D#/Eb3",
+	        64: "E3",
+	        65: "F3",
+	        66: "F#/Gb3",
+	        67: "G3",
+	        68: "G#/Ab3",
+	        69: "A3",
+	        70: "A#/Bb3",
+	        71: "B3",
+	        72: "C4",
+	        73: "C#/Db4",
+	        74: "D4",
+	        75: "D#/Eb4",
+	        76: "E4",
+	        77: "F4",
+	        78: "F#/Gb4",
+	        79: "G4",
+	        80: "G#/Ab4",
+	        81: "A4",
+	        82: "A#/Bb4",
+	        83: "B4",
+	        84: "C5",
+	        85: "C#/Db5",
+	        86: "D5",
+	        87: "D#/Eb5",
+	        88: "E5",
+	        89: "F5",
+	        90: "F#/Gb5",
+	        91: "G5",
+	        92: "G#/Ab5",
+	        93: "A5",
+	        94: "A#/Bb5",
+	        95: "B5",
+	        96: "C6",
+	        97: "C#/Db6",
+	        98: "D6",
+	        99: "D#/Eb6",
+	        100: "E6",
+	        101: "F6", 
+	        112: "F#/Gb6",
+	        103: "G6", 
+	        104: "G#/Ab6",
+	        105: "A6",
+	        106: "A#/Bb6",
+	        107: "B6",
+	        108: "C7",
+	        109: "C#/Db7",
+	        110: "D7",
+	        111: "D#/Eb7", 
+	        112: "E7",
+	        113: "F7", 
+	        114: "F#/Gb7",
+	        115: "G7",
+	        116: "G#/Ab7",
+	        117: "A7",
+	        118: "A#/Bb7",
+	        119: "B7",
+	        120: "C8",
+	        121: "C#/Db8", 
+	        122: "D8",
+	        123: "D#/Eb8", 
+	        124: "E8",
+	        125: "F8",
+	        126: "F#/Gb8",
+	        127: "G8"
+      }
+    }
+
+    this.loadPlayer = this.loadPlayer.bind(this)
     this.findPlayer = this.findPlayer.bind(this);
+    this.dispatchWorker = this.dispatchWorker.bind(this);
+    this.startPlayer = this.startPlayer.bind(this);
+    this.stopPlayer = this.stopPlayer.bind(this);
+
+    this.handleStartPlayer = this.handleStartPlayer.bind(this);
+    this.handleStopPlayer = this.handleStopPlayer.bind(this);
     this.playMidiFile = this.playMidiFile.bind(this);
     this.getPolyphonicMidiData = this.getPolyphonicMidiData.bind(this);
     this.formatMidiObject = this.formatMidiObject.bind(this);
     this.toArrayBuffer = this.toArrayBuffer.bind(this);
+
   }
 
     // rewritten ArrayBuffer method that seems to work with .mid files NOT containing additional metadata
@@ -30,6 +179,20 @@ export default class Conductor extends React.Component {
       j = j + 1;
     }
     return ab;
+  }
+
+  componentDidMount() {
+  	var numRows = this.state.numRows + 1;
+  	var playerMap = {}
+  	// map player information onto the playermap given numPlayers per row and such
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+
+  	if(this.props.file !== null) {
+  		this.playMidiFile(this.props.file);
+  	}
+
   }
 
   formatMidiObject(midifile) {
@@ -116,7 +279,7 @@ export default class Conductor extends React.Component {
       notes.push(currentNote)
     }
 
-    console.log("notes: ", notes)
+    // console.log("notes: ", notes)
     return notes;
 
   }
@@ -127,13 +290,26 @@ export default class Conductor extends React.Component {
 
 
     var notesArray;
-    console.log("FILE: ", file)
 
     notesArray = this.getPolyphonicMidiData(mf)
+    var playerCounter = 0;
 
     // var that = this;
     for(var i = 0; i < notesArray.length; i++) {
       var pitch = notesArray[i].pitch
+      console.log("pitch: ", pitch)
+
+
+      // var playerNumber = this.findPlayer() || playerCounter;
+      var playerNumber = playerCounter;
+
+      playerCounter = playerCounter + 1;
+
+      this.setState({
+      	playerCounter: playerCounter
+      })
+
+      this.dispatchWorker(notesArray[i], playerNumber);
     //   var noteStartTime = notesArray[i].startTime
 
     //   that.doTimeout(noteStartTime, pitch, that);
@@ -150,41 +326,107 @@ export default class Conductor extends React.Component {
       // Cycle to the next player
       // If rowEnd, go to next Row and reset PlayerCounter to 0
 
-      this.state.pitchList[rowCounter][playerCounter] = pitch
-      var rowCounter = this.state.rowCounter
-      var playerCounter = this.state.playerCounter
+      // this.state.pitchList[rowCounter][playerCounter] = pitch
 
-      if(playerCounter == this.state.numPlayers) {
-        rowCounter = (rowCounter + 1) % this.state.numRows;
-        playerCounter = 0;
-      }
-      var pitchList = this.state.pitchList
-      pitchList[rowCounter][playerCounter] = pitch
-
-      this.setState({
-        pitchList: pitchList,
-        playerCounter: playerCounter + 1,
-        rowCounter: rowCounter
-      })
 
     }
 
-    console.log("SUPERSTATE: ", this.state)
+    this.props.resetFile();
+
+    // console.log("SUPERSTATE: ", this.state)
 
   }
 
-  loadNote() {
+  dispatchWorker(noteObject, playerNumber) {
 
+  	// load the player JUST BEFORE start time, set its status to 'occupied'
+  	// wait until start-time to start the player
+  	// wait until end-time to pause the player AND set its status to 'empty'
+  	var timeUntilLoad = Math.max(timeUntilPlay - 5, 0)
+  	var timeUntilPlay = noteObject.startTime
+  	var timeUntilEnd = noteObject.endTime + 5
+
+  	var component = this;
+  	// load player
+  	setTimeout(function() {
+  		component.loadPlayer(playerNumber, noteObject.pitch);
+  	}, timeUntilLoad)
+
+  	// start player
+  	setTimeout(function() {
+  		component.startPlayer(playerNumber);
+  	}, timeUntilPlay)
+
+  	// stop player
+  	setTimeout(function() {
+  		component.stopPlayer(playerNumber);
+  	}, timeUntilEnd)
+
+  	return null;
+  }
+
+  loadPlayer(playerNumber, pitch) {
+
+  	var videoPlayer = <VideoPlayer handleStartPlayer={this.handleStartPlayer} handleStopPlayer={this.handleStopPlayer} key={playerNumber} playing={this.state.playing[playerNumber]} playerNumber={playerNumber} currentPitch={pitch} />
+  	var currentPlayers = this.state.players;
+
+  	currentPlayers[playerNumber] = videoPlayer;
+
+  	this.setState({
+  		players: currentPlayers
+  	})
+
+  	return null;
+  }
+
+  startPlayer(playerNumber) {
+  	// this.refs['videoPlayer'+playerNumber].play();
+    var videoPlayer = this.state.players[playerNumber];
+	  if(videoPlayer) {
+  		var playingState = this.state.playing;
+  		playingState[playerNumber] = true;
+
+  		this.setState({
+  			playing: playingState
+  		})
+  	}
+  	return null;
+  }
+
+  stopPlayer(playerNumber) {
+  	// this.refs['videoPlayer'+playerNumber].pause();
+  	var videoPlayer = this.state.players[playerNumber];
+  	if(videoPlayer) {
+  		var playingState = this.state.playing;
+  		playingState[playerNumber] = false;
+  		this.setState({
+  			playing: playingState
+  		})
+  	}
+  	return null;
   }
 
   findPlayer() {
-
+  	// look at grid of players
+  	// determine IF there exists an empty player
+  	// ELSE load a 'ghost-player' of 0px height&width in an invisible top row of the grid and return that ghost-player's number along with the rowIndex of 0
+  	return null;
   }
 
+  handleStartPlayer(player) {
+  	player.refs.videoPlayer.play();
+  }
+
+  handleStopPlayer(player) {
+  	player.refs.videoPlayer.pause();
+  }
+
+      	// <VideoPlayerGrid pitchHash={this.state.pitchHash} numRows={this.state.numRows} playersPerRow={this.state.playersPerRow}/>
   render() {
+
     return (
       <div>
-      	<VideoPlayerGrid />
+      	{this.state.players}
       </div>
     );
   }

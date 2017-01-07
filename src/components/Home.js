@@ -13,6 +13,7 @@ export default class Home extends React.Component {
     }
 
     this.uploadFile = this.uploadFile.bind(this)
+    this.resetFile = this.resetFile.bind(this);
 
   }
 
@@ -21,7 +22,14 @@ export default class Home extends React.Component {
     this.setState({
       file: file
     })
+
     
+  }
+
+  resetFile() {
+    this.setState({
+      file: null
+    })
   }
 
   render() {
@@ -29,7 +37,7 @@ export default class Home extends React.Component {
       <div>
       	
       	HOMEPAGE
-      	<Conductor />
+      	<Conductor file={this.state.file} resetFile={this.resetFile}/>
         <MidiFileInput uploadFile={this.uploadFile} />
       </div>
     );

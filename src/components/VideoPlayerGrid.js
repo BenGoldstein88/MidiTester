@@ -1,20 +1,15 @@
 import React from 'react';
 import VideoPlayerRow from './VideoPlayerRow';
-import MIDIFileHeader from '../midistuff/MIDIFileHeader';
-import MIDIFile from 'midifile';
+
 
 export default class VideoPlayerGrid extends React.Component {
 
   constructor(props) {
     super(props);
 
-    this.state = {
-    	numRows: 3,
-    	playersPerRow: 3,
-      pitchList: [],
-      rowCounter: 0,
-      playerCounter: 0
-    }
+    // this.state = {
+
+    // }
 
 
 
@@ -55,11 +50,10 @@ export default class VideoPlayerGrid extends React.Component {
   // }
 
   render() {
-    console.log("RENDERSTATE: ", this.state)
   	var playerRows = [];
 
-  	for(var i = 0; i < this.state.numRows; i++) {
-  		playerRows.push(<VideoPlayerRow pitchList={this.state.pitchList[i] || [] } key={i} numPlayers={this.state.playersPerRow} />)
+  	for(var i = 0; i < this.props.numRows; i++) {
+  		playerRows.push(<VideoPlayerRow pitchList={this.props.pitchHash[i] || [] } key={i} numPlayers={this.props.playersPerRow} />)
   	}
 
     return (
