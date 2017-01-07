@@ -6,9 +6,12 @@ export default class VideoPlayer extends React.Component {
   constructor(props) {
     super(props);
 
-    // this.state = {
-    //   currentPitch: '-1'      
-    // }
+
+
+    this.state = {
+      currentPitch: '-1',
+      playing: false      
+    }
     // this.doTimeout = this.doTimeout.bind(this)
     // this.playNote = this.playNote.bind(this)
     // this.stopPlayerWithTimeout = this.stopPlayerWithTimeout.bind(this)
@@ -16,14 +19,31 @@ export default class VideoPlayer extends React.Component {
     this.handleStopPlayer = this.handleStopPlayer.bind(this);
   }
 
+  componentWillReceiveProps(nextProps) {
+    console.log("nextProps: ", nextProps);
+    this.setState({
+      currentPitch: nextProps.currentPitch,
+      playing: nextProps.playing
+    })
+    
+  }
   componentDidUpdate(prevProps, prevState) {
-      if(this.props.playing === true) {
-        console.log( "Playing!: ", this.props.playing);
+    // console.log(prevProps, prevState)
+      console.log("this.state.playing for "+ this.props.playerNumber +": ", this.state.playing);
+      if(this.state.playing === true) {
+        console.log( "Playing!: ", this.state.playing);
         this.refs.videoPlayer.play();
       } else {
-        console.log( "Stopping!: ", this.props.playing);
+        console.log("Stopping!: ", this.state.playing);
         this.refs.videoPlayer.pause();
       }
+  }
+
+  componentDidMount() {
+    this.setState({
+      currentPitch: this.props.currentPitch,
+      playing: this.props.playing
+    })   
   }
 
   handleStartPlayer() {
@@ -82,11 +102,10 @@ export default class VideoPlayer extends React.Component {
     }
 
     return (
-
         <video ref={'videoPlayer'} style={{
-          height: '50px',
-          width: '50px'
-        }} controls>
+          height: '100px',
+          width: '100px'
+        }} >
           <source src={sourceString} />
         </video>
     );

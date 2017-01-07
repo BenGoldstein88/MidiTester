@@ -293,7 +293,7 @@ export default class Conductor extends React.Component {
 
     notesArray = this.getPolyphonicMidiData(mf)
     var playerCounter = 0;
-
+    console.log( "notesArray: ", notesArray);
     // var that = this;
     for(var i = 0; i < notesArray.length; i++) {
       var pitch = notesArray[i].pitch
@@ -342,8 +342,8 @@ export default class Conductor extends React.Component {
   	// load the player JUST BEFORE start time, set its status to 'occupied'
   	// wait until start-time to start the player
   	// wait until end-time to pause the player AND set its status to 'empty'
-  	var timeUntilLoad = Math.max(timeUntilPlay - 5, 0)
   	var timeUntilPlay = noteObject.startTime
+    var timeUntilLoad = Math.max(timeUntilPlay - 5, 0)
   	var timeUntilEnd = noteObject.endTime + 5
 
   	var component = this;
@@ -366,6 +366,7 @@ export default class Conductor extends React.Component {
   }
 
   loadPlayer(playerNumber, pitch) {
+    // console.log("Loading Player: ", playerNumber);
 
   	var videoPlayer = <VideoPlayer handleStartPlayer={this.handleStartPlayer} handleStopPlayer={this.handleStopPlayer} key={playerNumber} playing={this.state.playing[playerNumber]} playerNumber={playerNumber} currentPitch={pitch} />
   	var currentPlayers = this.state.players;
@@ -381,24 +382,34 @@ export default class Conductor extends React.Component {
 
   startPlayer(playerNumber) {
   	// this.refs['videoPlayer'+playerNumber].play();
+    console.log("Starting Player: ", playerNumber);
     var videoPlayer = this.state.players[playerNumber];
 	  if(videoPlayer) {
   		var playingState = this.state.playing;
   		playingState[playerNumber] = true;
+      // console.log("playingState[playerNumber]: ", playingState[playerNumber]);
+      playingState.push(false);
 
   		this.setState({
   			playing: playingState
   		})
+
+      // console.log("this.state.playing: ", this.state.playing);
   	}
   	return null;
   }
 
+  
+
   stopPlayer(playerNumber) {
   	// this.refs['videoPlayer'+playerNumber].pause();
+    console.log("Stopping Player: ", playerNumber);
   	var videoPlayer = this.state.players[playerNumber];
   	if(videoPlayer) {
   		var playingState = this.state.playing;
   		playingState[playerNumber] = false;
+      playingState.push(false);
+
   		this.setState({
   			playing: playingState
   		})

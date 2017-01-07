@@ -63,7 +63,7 @@
 /******/ 	}
 
 /******/ 	var hotApplyOnUpdate = true;
-/******/ 	var hotCurrentHash = "acb35b3f67e3913df1e4"; // eslint-disable-line no-unused-vars
+/******/ 	var hotCurrentHash = "bef777fb21410527e6ab"; // eslint-disable-line no-unused-vars
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentParents = []; // eslint-disable-line no-unused-vars
 
@@ -8843,8 +8843,8 @@
 	      return _react2.default.createElement(
 	        "video",
 	        { ref: 'videoPlayer', style: {
-	            height: '0px',
-	            width: '0px'
+	            height: '50px',
+	            width: '50px'
 	          }, controls: true },
 	        _react2.default.createElement("source", { src: sourceString })
 	      );
@@ -12986,8 +12986,9 @@
 	  }, {
 	    key: 'loadPlayer',
 	    value: function loadPlayer(playerNumber, pitch) {
+	      console.log("Loading Player: ", playerNumber);
 
-	      var videoPlayer = _react2.default.createElement(_VideoPlayer2.default, { handleStartPlayer: this.handleStartPlayer, handleStopPlayer: this.handleStopPlayer, key: playerNumber, playing: this.state.playing, playerNumber: playerNumber, currentPitch: pitch });
+	      var videoPlayer = _react2.default.createElement(_VideoPlayer2.default, { handleStartPlayer: this.handleStartPlayer, handleStopPlayer: this.handleStopPlayer, key: playerNumber, playing: this.state.playing[playerNumber], playerNumber: playerNumber, currentPitch: pitch });
 	      var currentPlayers = this.state.players;
 
 	      currentPlayers[playerNumber] = videoPlayer;
@@ -13002,6 +13003,7 @@
 	    key: 'startPlayer',
 	    value: function startPlayer(playerNumber) {
 	      // this.refs['videoPlayer'+playerNumber].play();
+	      console.log("Starting Player: ", playerNumber);
 	      var videoPlayer = this.state.players[playerNumber];
 	      if (videoPlayer) {
 	        var playingState = this.state.playing;
@@ -13017,6 +13019,7 @@
 	    key: 'stopPlayer',
 	    value: function stopPlayer(playerNumber) {
 	      // this.refs['videoPlayer'+playerNumber].pause();
+	      console.log("Stopping Player: ", playerNumber);
 	      var videoPlayer = this.state.players[playerNumber];
 	      if (videoPlayer) {
 	        var playingState = this.state.playing;
