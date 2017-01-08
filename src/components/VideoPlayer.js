@@ -29,10 +29,21 @@ export default class VideoPlayer extends React.Component {
   }
   componentDidUpdate(prevProps, prevState) {
     // console.log(prevProps, prevState)
+
+      // if(this.state.playing == false && this.props.playing === true) {
+      //   this.setState({
+      //     currentPitch: this.props.currentPitch,
+      //     playing: this.props.playing          
+      //   })
+      // }
       console.log("this.state.playing for "+ this.props.playerNumber +": ", this.state.playing);
-      if(this.state.playing === true) {
+      var component = this;
+      if(this.props.playing === true) {
         console.log( "Playing!: ", this.state.playing);
         this.refs.videoPlayer.play();
+        setTimeout(function() {
+          component.refs.videoPlayer.pause();
+        }, component.props.playTime + 50)
       } else {
         console.log("Stopping!: ", this.state.playing);
         this.refs.videoPlayer.pause();

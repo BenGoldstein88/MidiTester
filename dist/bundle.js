@@ -63,7 +63,7 @@
 /******/ 	}
 
 /******/ 	var hotApplyOnUpdate = true;
-/******/ 	var hotCurrentHash = "bef777fb21410527e6ab"; // eslint-disable-line no-unused-vars
+/******/ 	var hotCurrentHash = "43aae1cd7f18f8591c30"; // eslint-disable-line no-unused-vars
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentParents = []; // eslint-disable-line no-unused-vars
 
@@ -8735,7 +8735,7 @@
 /* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
-	"use strict";
+	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
@@ -8761,37 +8761,64 @@
 	  function VideoPlayer(props) {
 	    _classCallCheck(this, VideoPlayer);
 
-	    // this.state = {
-	    //   currentPitch: '-1'      
-	    // }
+	    var _this = _possibleConstructorReturn(this, (VideoPlayer.__proto__ || Object.getPrototypeOf(VideoPlayer)).call(this, props));
+
+	    _this.state = {
+	      currentPitch: '-1',
+	      playing: false
+	    };
 	    // this.doTimeout = this.doTimeout.bind(this)
 	    // this.playNote = this.playNote.bind(this)
 	    // this.stopPlayerWithTimeout = this.stopPlayerWithTimeout.bind(this)
-	    var _this = _possibleConstructorReturn(this, (VideoPlayer.__proto__ || Object.getPrototypeOf(VideoPlayer)).call(this, props));
-
 	    _this.handleStartPlayer = _this.handleStartPlayer.bind(_this);
 	    _this.handleStopPlayer = _this.handleStopPlayer.bind(_this);
 	    return _this;
 	  }
 
 	  _createClass(VideoPlayer, [{
-	    key: "componentDidUpdate",
+	    key: 'componentWillReceiveProps',
+	    value: function componentWillReceiveProps(nextProps) {
+	      console.log("nextProps: ", nextProps);
+	      this.setState({
+	        currentPitch: nextProps.currentPitch,
+	        playing: nextProps.playing
+	      });
+	    }
+	  }, {
+	    key: 'componentDidUpdate',
 	    value: function componentDidUpdate(prevProps, prevState) {
+	      // console.log(prevProps, prevState)
+
+	      // if(this.state.playing == false && this.props.playing === true) {
+	      //   this.setState({
+	      //     currentPitch: this.props.currentPitch,
+	      //     playing: this.props.playing          
+	      //   })
+	      // }
+	      console.log("this.state.playing for " + this.props.playerNumber + ": ", this.state.playing);
 	      if (this.props.playing === true) {
-	        console.log("Playing!: ", this.props.playing);
+	        console.log("Playing!: ", this.state.playing);
 	        this.refs.videoPlayer.play();
 	      } else {
-	        console.log("Stopping!: ", this.props.playing);
+	        console.log("Stopping!: ", this.state.playing);
 	        this.refs.videoPlayer.pause();
 	      }
 	    }
 	  }, {
-	    key: "handleStartPlayer",
+	    key: 'componentDidMount',
+	    value: function componentDidMount() {
+	      this.setState({
+	        currentPitch: this.props.currentPitch,
+	        playing: this.props.playing
+	      });
+	    }
+	  }, {
+	    key: 'handleStartPlayer',
 	    value: function handleStartPlayer() {
 	      this.refs.videoPlayer.play();
 	    }
 	  }, {
-	    key: "handleStopPlayer",
+	    key: 'handleStopPlayer',
 	    value: function handleStopPlayer() {
 	      this.refs.videoPlayer.pause();
 	    }
@@ -8832,7 +8859,7 @@
 	    // }
 
 	  }, {
-	    key: "render",
+	    key: 'render',
 	    value: function render() {
 	      if (this.props.currentPitch === '-1') {
 	        var sourceString = '';
@@ -8841,12 +8868,12 @@
 	      }
 
 	      return _react2.default.createElement(
-	        "video",
+	        'video',
 	        { ref: 'videoPlayer', style: {
-	            height: '50px',
-	            width: '50px'
-	          }, controls: true },
-	        _react2.default.createElement("source", { src: sourceString })
+	            height: '100px',
+	            width: '100px'
+	          } },
+	        _react2.default.createElement('source', { src: sourceString })
 	      );
 	    }
 	  }]);
@@ -12645,7 +12672,7 @@
 	    var _this = _possibleConstructorReturn(this, (Conductor.__proto__ || Object.getPrototypeOf(Conductor)).call(this, props));
 
 	    _this.state = {
-	      playing: [false],
+	      playing: [true],
 	      playerCounter: 0,
 	      numRows: 3,
 	      playersPerRow: 3,
@@ -12772,6 +12799,7 @@
 	    _this.dispatchWorker = _this.dispatchWorker.bind(_this);
 	    _this.startPlayer = _this.startPlayer.bind(_this);
 	    _this.stopPlayer = _this.stopPlayer.bind(_this);
+	    _this.togglePlayer = _this.togglePlayer.bind(_this);
 
 	    _this.handleStartPlayer = _this.handleStartPlayer.bind(_this);
 	    _this.handleStopPlayer = _this.handleStopPlayer.bind(_this);
@@ -12806,8 +12834,8 @@
 	  }, {
 	    key: 'componentDidMount',
 	    value: function componentDidMount() {
-	      var numRows = this.state.numRows + 1;
-	      var playerMap = {};
+	      // var numRows = this.state.numRows + 1;
+	      // var playerMap = {}
 	      // map player information onto the playermap given numPlayers per row and such
 	    }
 	  }, {
@@ -12914,7 +12942,7 @@
 
 	      notesArray = this.getPolyphonicMidiData(mf);
 	      var playerCounter = 0;
-
+	      console.log("notesArray: ", notesArray);
 	      // var that = this;
 	      for (var i = 0; i < notesArray.length; i++) {
 	        var pitch = notesArray[i].pitch;
@@ -12961,8 +12989,8 @@
 	      // load the player JUST BEFORE start time, set its status to 'occupied'
 	      // wait until start-time to start the player
 	      // wait until end-time to pause the player AND set its status to 'empty'
-	      var timeUntilLoad = Math.max(timeUntilPlay - 5, 0);
 	      var timeUntilPlay = noteObject.startTime;
+	      var timeUntilLoad = Math.max(timeUntilPlay, 0);
 	      var timeUntilEnd = noteObject.endTime + 5;
 
 	      var component = this;
@@ -12971,10 +12999,11 @@
 	        component.loadPlayer(playerNumber, noteObject.pitch);
 	      }, timeUntilLoad);
 
-	      // start player
-	      setTimeout(function () {
-	        component.startPlayer(playerNumber);
-	      }, timeUntilPlay);
+	      // // start player
+	      // setTimeout(function() {
+	      // 	component.startPlayer(playerNumber);
+	      // }, timeUntilPlay)
+
 
 	      // stop player
 	      setTimeout(function () {
@@ -12984,11 +13013,29 @@
 	      return null;
 	    }
 	  }, {
+	    key: 'togglePlayer',
+	    value: function togglePlayer(playerNumber) {
+	      console.log("Toggling: ", playerNumber);
+	      var videoPlayer = this.state.players[playerNumber];
+	      if (videoPlayer) {
+	        var playingState = this.state.playing;
+	        playingState[playerNumber] = !playingState[playerNumber];
+	        playingState.push(false);
+
+	        this.setState({
+	          playing: playingState
+	        });
+	      }
+	      return null;
+	    }
+	  }, {
 	    key: 'loadPlayer',
 	    value: function loadPlayer(playerNumber, pitch) {
-	      console.log("Loading Player: ", playerNumber);
+	      // console.log("Loading Player: ", playerNumber);
 
-	      var videoPlayer = _react2.default.createElement(_VideoPlayer2.default, { handleStartPlayer: this.handleStartPlayer, handleStopPlayer: this.handleStopPlayer, key: playerNumber, playing: this.state.playing[playerNumber], playerNumber: playerNumber, currentPitch: pitch });
+	      var playing = this.state.playing[playerNumber];
+
+	      var videoPlayer = _react2.default.createElement(_VideoPlayer2.default, { handleStartPlayer: this.handleStartPlayer, handleStopPlayer: this.handleStopPlayer, key: playerNumber, playing: true, playerNumber: playerNumber, currentPitch: pitch });
 	      var currentPlayers = this.state.players;
 
 	      currentPlayers[playerNumber] = videoPlayer;
@@ -13008,6 +13055,7 @@
 	      if (videoPlayer) {
 	        var playingState = this.state.playing;
 	        playingState[playerNumber] = true;
+	        playingState.push(false);
 
 	        this.setState({
 	          playing: playingState
@@ -13021,13 +13069,21 @@
 	      // this.refs['videoPlayer'+playerNumber].pause();
 	      console.log("Stopping Player: ", playerNumber);
 	      var videoPlayer = this.state.players[playerNumber];
-	      if (videoPlayer) {
-	        var playingState = this.state.playing;
-	        playingState[playerNumber] = false;
-	        this.setState({
-	          playing: playingState
-	        });
-	      }
+	      // if(videoPlayer) {
+	      // 	var playingState = this.state.playing;
+	      // 	playingState[playerNumber] = false;
+	      //    playingState.push(false);
+
+	      // 	this.setState({
+	      // 		playing: playingState
+	      // 	})
+	      // }
+	      var players = this.state.players;
+	      players.splice(playerNumber, 1);
+	      this.setState({
+	        players: players
+	      });
+
 	      return null;
 	    }
 	  }, {
