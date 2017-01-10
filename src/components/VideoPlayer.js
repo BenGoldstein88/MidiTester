@@ -17,14 +17,15 @@ export default class VideoPlayer extends React.Component {
     // this.stopPlayerWithTimeout = this.stopPlayerWithTimeout.bind(this)
     this.handleStartPlayer = this.handleStartPlayer.bind(this);
     this.handleStopPlayer = this.handleStopPlayer.bind(this);
+    this.selfDestruct = this.selfDestruct.bind(this);
   }
 
   componentWillReceiveProps(nextProps) {
-    console.log("nextProps: ", nextProps);
-    this.setState({
-      currentPitch: nextProps.currentPitch,
-      playing: nextProps.playing
-    })
+    // console.log("nextProps: ", nextProps);
+    // this.setState({
+    //   currentPitch: nextProps.currentPitch,
+    //   playing: nextProps.playing
+    // })
     
   }
   componentDidUpdate(prevProps, prevState) {
@@ -38,23 +39,41 @@ export default class VideoPlayer extends React.Component {
       // }
       console.log("this.state.playing for "+ this.props.playerNumber +": ", this.state.playing);
       var component = this;
-      if(this.props.playing === true) {
-        console.log( "Playing!: ", this.state.playing);
-        this.refs.videoPlayer.play();
-        setTimeout(function() {
-          component.refs.videoPlayer.pause();
-        }, component.props.playTime + 50)
-      } else {
-        console.log("Stopping!: ", this.state.playing);
-        this.refs.videoPlayer.pause();
-      }
+      // if(this.props.playing === true) {
+      //   console.log( "Playing!: ", this.state.playing);
+      //   this.refs.videoPlayer.play();
+      //   setTimeout(function() {
+      //     component.refs.videoPlayer.pause();
+      //   }, component.props.playTime + 50)
+      // } else {
+      //   console.log("Stopping!: ", this.state.playing);
+      //   this.refs.videoPlayer.pause();
+      // }
   }
 
   componentDidMount() {
-    this.setState({
-      currentPitch: this.props.currentPitch,
-      playing: this.props.playing
-    })   
+    // this.setState({
+    //   currentPitch: this.props.noteInfo.pitch,
+    //   playing: this.props.playing
+    // })
+    var component = this;
+
+
+    setTimeout(function() {
+      component.refs.videoPlayer.play();
+
+
+    }, component.props.noteInfo.startTime)
+
+    setTimeout(function() {
+      component.refs.videoPlayer.pause();
+      component.selfDestruct();
+    }, component.props.noteInfo.endTime)
+
+  }
+
+  selfDestruct() {
+    this.props.handleSelfDestruct(this.props.playerNumber);
   }
 
   handleStartPlayer() {
@@ -103,19 +122,27 @@ export default class VideoPlayer extends React.Component {
   // }
 
   render() {
+
+    var adjustedPitch = this.props.noteInfo.pitch;
+    if(adjustedPitch < 46 && adjustedPitch > -1) {
+      adjustedPitch = adjustedPitch + 12
+    } else if(adjustedPitch > 70) {
+      adjustedPitch = adjustedPitch - 12
+    }
+
     if(this.props.currentPitch === '-1') {
       var sourceString = '';
 
 
     } else {
-      var sourceString = "/assets/videos/" + this.props.currentPitch +".mp4"
+      var sourceString = "/assets/videos/" + adjustedPitch +".mp4"
 
     }
 
     return (
         <video ref={'videoPlayer'} style={{
-          height: '100px',
-          width: '100px'
+          height: '20px',
+          width: '20px'
         }} >
           <source src={sourceString} />
         </video>

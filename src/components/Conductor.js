@@ -155,6 +155,7 @@ export default class Conductor extends React.Component {
     this.startPlayer = this.startPlayer.bind(this);
     this.stopPlayer = this.stopPlayer.bind(this);
     this.togglePlayer = this.togglePlayer.bind(this);
+    this.handleSelfDestruct = this.handleSelfDestruct.bind(this);
 
     this.handleStartPlayer = this.handleStartPlayer.bind(this);
     this.handleStopPlayer = this.handleStopPlayer.bind(this);
@@ -296,6 +297,8 @@ export default class Conductor extends React.Component {
     var playerCounter = 0;
     console.log( "notesArray: ", notesArray);
     // var that = this;
+
+    var players = [];
     for(var i = 0; i < notesArray.length; i++) {
       var pitch = notesArray[i].pitch
       console.log("pitch: ", pitch)
@@ -310,7 +313,8 @@ export default class Conductor extends React.Component {
       	playerCounter: playerCounter
       })
 
-      this.dispatchWorker(notesArray[i], playerNumber);
+      var loadedPlayer = this.loadPlayer(notesArray[i], playerNumber);
+      players[playerNumber] = loadedPlayer;
     //   var noteStartTime = notesArray[i].startTime
 
     //   that.doTimeout(noteStartTime, pitch, that);
@@ -329,8 +333,11 @@ export default class Conductor extends React.Component {
 
       // this.state.pitchList[rowCounter][playerCounter] = pitch
 
-
     }
+
+    this.setState({
+      players: players
+    })
 
     this.props.resetFile();
 
@@ -343,15 +350,22 @@ export default class Conductor extends React.Component {
   	// load the player JUST BEFORE start time, set its status to 'occupied'
   	// wait until start-time to start the player
   	// wait until end-time to pause the player AND set its status to 'empty'
-  	var timeUntilPlay = noteObject.startTime
-    var timeUntilLoad = Math.max(timeUntilPlay, 0)
-  	var timeUntilEnd = noteObject.endTime + 5
 
-  	var component = this;
+
+
+    this.loadPlayer(noteObject, playerNumber);
+  	// var timeUntilPlay = noteObject.startTime
+   //  var timeUntilLoad = Math.max(timeUntilPlay, 0)
+  	// var timeUntilEnd = noteObject.endTime + 5
+
+  	
+
+    // var component = this;
+
   	// load player
-  	setTimeout(function() {
-  		component.loadPlayer(noteObject, playerNumber);
-  	}, timeUntilLoad)
+  	// setTimeout(function() {
+  	// 	component.loadPlayer(noteObject, playerNumber);
+  	// }, timeUntilLoad)
 
   	// // start player
   	// setTimeout(function() {
@@ -361,11 +375,37 @@ export default class Conductor extends React.Component {
 
 
   	// stop player
-  	setTimeout(function() {
-  		component.stopPlayer(playerNumber);
-  	}, timeUntilEnd)
+  	// setTimeout(function() {
+  	// 	component.stopPlayer(playerNumber);
+  	// }, timeUntilEnd)
 
   	return null;
+  }
+
+  loadPlayer(noteObject, playerNumber) {
+    // console.log("Loading Player: ", playerNumber);
+
+    var playing = this.state.playing[playerNumber];
+    var playTime = noteObject.endTime - noteObject.startTime;
+
+  	var videoPlayer = <VideoPlayer key={playerNumber} noteInfo={noteObject} playing={true} playerNumber={playerNumber} playTime={playTime} handleSelfDestruct={this.handleSelfDestruct}/>
+
+
+  	return videoPlayer;
+  }
+
+  handleSelfDestruct(playerNumber) {
+
+    var players = this.state.players;
+    console.log("players: ", players);
+    // players.splice(playerNumber, 1);
+    delete players[playerNumber];
+
+
+    this.setState({
+      players: players
+    })
+
   }
 
   togglePlayer(playerNumber) {
@@ -382,24 +422,6 @@ export default class Conductor extends React.Component {
     }
     return null;
 
-  }
-
-  loadPlayer(noteObject, playerNumber) {
-    // console.log("Loading Player: ", playerNumber);
-
-    var playing = this.state.playing[playerNumber];
-    var playTime = noteObject.endTime - noteObject.startTime;
-
-  	var videoPlayer = <VideoPlayer handleStartPlayer={this.handleStartPlayer} handleStopPlayer={this.handleStopPlayer} playTime={playTime} key={playerNumber} playing={true} playerNumber={playerNumber} currentPitch={noteObject.pitch} />
-  	var currentPlayers = this.state.players;
-
-  	currentPlayers[playerNumber] = videoPlayer;
-
-  	this.setState({
-  		players: currentPlayers
-  	})
-
-  	return null;
   }
 
   startPlayer(playerNumber) {
