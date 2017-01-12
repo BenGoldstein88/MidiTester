@@ -162,6 +162,9 @@ export default class Conductor extends React.Component {
     this.splitPlayers = this.splitPlayers.bind(this);
     this.preparePlayers = this.preparePlayers.bind(this);
 
+    this.playSong = this.playSong.bind(this);
+    this.loadPlayerWithTimeout = this.loadPlayerWithTimeout.bind(this);
+
     this.handleStartPlayer = this.handleStartPlayer.bind(this);
     this.handleStopPlayer = this.handleStopPlayer.bind(this);
     this.playMidiFile = this.playMidiFile.bind(this);
@@ -197,7 +200,8 @@ export default class Conductor extends React.Component {
   componentDidUpdate(prevProps, prevState) {
 
   	if(this.props.file !== null) {
-  		this.playMidiFile(this.props.file);
+  		// this.playMidiFile(this.props.file);
+      this.playSong(this.props.file);
       // this.splitPlayers();
   	}
 
@@ -355,6 +359,57 @@ export default class Conductor extends React.Component {
 
   }
 
+
+
+
+  playSong(file) {
+    var players = this.preparePlayers(file);
+    var component = this;
+    for(var i = 0; i < players.length; i++) {
+
+      var player = players[i];
+      // console.log("player: ", player);
+      component.loadPlayerWithTimeout(player);
+    }
+  }
+
+  loadPlayerWithTimeout(player) {
+    var component = this;
+    setTimeout(function(){  
+      // component.setState({
+      //   playersPlaying: playersPlaying
+      // })
+      var playersPlaying = component.state.playersPlaying;
+      var finalIndex = playersPlaying.length - 1;
+      playersPlaying.push(player);
+      console.log("loading player #: " + player.props.playerNumber + " @ array location " + finalIndex + " with delay of " + player.props.noteInfo.startTime);
+      component.manualPlayersRefesh(playersPlaying);
+
+    }, player.props.noteInfo.startTime)
+  }
+
+  handleStopPlayer(videoPlayer) {
+    var playersPlaying = this.state.playersPlaying;
+    var indexToDelete = -1;
+    for(var i = 0; i < playersPlaying.length; i++) {
+      var player = playersPlaying[i];
+      if(player.props.playerNumber === videoPlayer.props.playerNumber) {
+        indexToDelete = i;
+        console.log("indexToDelete: ", indexToDelete);
+      }
+    }
+
+    if(indexToDelete > -1) {
+      delete playersPlaying[i]
+    }
+
+    this.setState({
+      playersPlaying: playersPlaying
+    })
+
+    return null;
+  }
+
   playMidiFile(file) {
     var players = this.preparePlayers(file);
     console.log("players: ", players);
@@ -380,9 +435,10 @@ export default class Conductor extends React.Component {
         playersPlaying.push(player);
         console.log("playersPlaying: ", playersPlaying);
         // console.log("component: ", component);
-        component.setState({
-          playersPlaying: playersPlaying
-        })
+        // component.setState({
+        //   playersPlaying: playersPlaying
+        // })
+        component.manualPlayersRefesh(playersPlaying);
       } else {
         i--;
         overflow++;
@@ -395,41 +451,49 @@ export default class Conductor extends React.Component {
 
   }
 
+  manualPlayersRefesh(playersPlaying) {
+    console.log("Refreshing....: ");
+    this.setState({
+      playersPlaying: playersPlaying
+    })
+    return null;
+  }
+
   dispatchWorker(noteObject, playerNumber) {
 
-  	// load the player JUST BEFORE start time, set its status to 'occupied'
-  	// wait until start-time to start the player
-  	// wait until end-time to pause the player AND set its status to 'empty'
+    // load the player JUST BEFORE start time, set its status to 'occupied'
+    // wait until start-time to start the player
+    // wait until end-time to pause the player AND set its status to 'empty'
 
 
 
     this.loadPlayer(noteObject, playerNumber);
-  	// var timeUntilPlay = noteObject.startTime
+    // var timeUntilPlay = noteObject.startTime
    //  var timeUntilLoad = Math.max(timeUntilPlay, 0)
-  	// var timeUntilEnd = noteObject.endTime + 5
+    // var timeUntilEnd = noteObject.endTime + 5
 
-  	
+    
 
     // var component = this;
 
-  	// load player
-  	// setTimeout(function() {
-  	// 	component.loadPlayer(noteObject, playerNumber);
-  	// }, timeUntilLoad)
+    // load player
+    // setTimeout(function() {
+    //  component.loadPlayer(noteObject, playerNumber);
+    // }, timeUntilLoad)
 
-  	// // start player
-  	// setTimeout(function() {
-  	// 	component.startPlayer(playerNumber);
-  	// }, timeUntilPlay)
+    // // start player
+    // setTimeout(function() {
+    //  component.startPlayer(playerNumber);
+    // }, timeUntilPlay)
 
 
 
-  	// stop player
-  	// setTimeout(function() {
-  	// 	component.stopPlayer(playerNumber);
-  	// }, timeUntilEnd)
+    // stop player
+    // setTimeout(function() {
+    //  component.stopPlayer(playerNumber);
+    // }, timeUntilEnd)
 
-  	return null;
+    return null;
   }
 
   loadPlayer(noteObject, playerNumber) {
@@ -440,20 +504,20 @@ export default class Conductor extends React.Component {
 
 
 
-  	var videoPlayer = <VideoPlayer handleStopPlayer={this.handleStopPlayer} key={playerNumber} noteInfo={noteObject} playing={true} playerNumber={playerNumber} playTime={playTime} handleSelfDestruct={this.handleSelfDestruct}/>
+    var videoPlayer = <VideoPlayer handleStopPlayer={this.handleStopPlayer} key={playerNumber} noteInfo={noteObject} playing={true} playerNumber={playerNumber} playTime={playTime} handleSelfDestruct={this.handleSelfDestruct}/>
 
-  	return videoPlayer;
+    return videoPlayer;
   }
 
   handleSelfDestruct(playerNumber) {
 
-    var players = this.state.players;
+    var playersPlaying = this.state.playersPlaying;
     // players.splice(playerNumber, 1);
-    delete players[playerNumber];
+    delete playersPlaying[playerNumber];
 
 
     this.setState({
-      players: players
+      playersPlaying: playersPlaying
     })
     return null;
 
@@ -476,35 +540,35 @@ export default class Conductor extends React.Component {
   }
 
   startPlayer(playerNumber) {
-  	// this.refs['videoPlayer'+playerNumber].play();
+    // this.refs['videoPlayer'+playerNumber].play();
     console.log("Starting Player: ", playerNumber);
     var videoPlayer = this.state.players[playerNumber];
-	  if(videoPlayer) {
-  		var playingState = this.state.playing;
-  		playingState[playerNumber] = true;
+    if(videoPlayer) {
+      var playingState = this.state.playing;
+      playingState[playerNumber] = true;
       playingState.push(false);
 
-  		this.setState({
-  			playing: playingState
-  		})
-  	}
-  	return null;
+      this.setState({
+        playing: playingState
+      })
+    }
+    return null;
   }
 
   
 
   stopPlayer(playerNumber) {
-  	// this.refs['videoPlayer'+playerNumber].pause();
+    // this.refs['videoPlayer'+playerNumber].pause();
     console.log("Stopping Player: ", playerNumber);
-  	// var videoPlayer = this.state.players[playerNumber];
-  	// if(videoPlayer) {
-  	// 	var playingState = this.state.playing;
-  	// 	playingState[playerNumber] = false;
+    // var videoPlayer = this.state.players[playerNumber];
+    // if(videoPlayer) {
+    //  var playingState = this.state.playing;
+    //  playingState[playerNumber] = false;
    //    playingState.push(false);
 
-  	// 	this.setState({
-  	// 		playing: playingState
-  	// 	})
+    //  this.setState({
+    //    playing: playingState
+    //  })
     // }
     var players = this.state.players;
     players.splice(playerNumber, 1);
@@ -512,83 +576,34 @@ export default class Conductor extends React.Component {
     this.setState({
       players: players
     })
-  	
-  	return null;
+    
+    return null;
   }
 
   findPlayer() {
-  	// look at grid of players
-  	// determine IF there exists an empty player
-  	// ELSE load a 'ghost-player' of 0px height&width in an invisible top row of the grid and return that ghost-player's number along with the rowIndex of 0
-  	return null;
+    // look at grid of players
+    // determine IF there exists an empty player
+    // ELSE load a 'ghost-player' of 0px height&width in an invisible top row of the grid and return that ghost-player's number along with the rowIndex of 0
+    return null;
   }
 
   handleStartPlayer(playerNumber) {
-  	// player.refs.videoPlayer.play();
+    // player.refs.videoPlayer.play();
   }
 
-  handleStopPlayer(videoPlayer) {
-    var playersPlaying = this.state.playersPlaying;
-    // console.log("playersPlaying: ", playersPlaying);
-    // console.log("videoPlayer: ", videoPlayer);
-    // delete playersPlaying[playerNumber];
-    // var indexToDelete = -1;
-    // for(var i = 0; i < playersPlaying.length; i++) {
-    //   // console.log("playersPlaying[i]: ", playersPlaying[i]);
-    //   var player = playersPlaying[i];
-    //   if(player.props.playerNumber === playerNumber) {
-    //     var indexToDelete = i;
-    //     console.log("indexToDelete: ", indexToDelete);
-    //   }
-    // }
-    // if(indexToDelete > -1) {
-    //   playersPlaying.splice(indexToDelete, 1);
-    // }
-
-
-    // var updatedPlayers = playersPlaying.map(function(player){
-    //     if(player.props.playerNumber !== videoPlayer.props.playerNumber) {
-    //       return player;
-    //     }
-    // })
-
-    var updatedPlayers = [];
-
-    for(var i = 0; i < playersPlaying.length; i++) {
-      var player = playersPlaying[i];
-      var playerNumber = player.props.playerNumber;
-      console.log("playerNumber: ", playerNumber);
-    }
-
-    console.log("break________");
-
-    console.log("updatedPlayers: ", updatedPlayers);
-    // var indexToDelete = playersPlaying.indexOf(videoPlayer) || -1;
-    // // console.log("playersPlaying: ", playersPlaying);
-    // console.log("indexToDelete: ", indexToDelete);
-
-    // if(indexToDelete > -1) {
-    //   delete playersPlaying(indexToDelete);
-    // }
-
-    this.setState({
-      playersPlaying: updatedPlayers
-    })
-
-    return null;
-  }
 
       	// <VideoPlayerGrid pitchHash={this.state.pitchHash} numRows={this.state.numRows} playersPerRow={this.state.playersPerRow}/>
   render() {
 
     // var playersPlaying;
-
+    var numPlayers = this.state.playersPlaying.length;
     // if(this.state.startPlay === true) {
     //   playersPlaying = this.state.playersPlaying;
     // } else {
     //   playersPlaying = <h4> 'playersPlaying go here' </h4>
     // }
-    console.log("ReRendering: ");
+    console.log("ReRendering with " + numPlayers + " players.");
+
     return (
       <div>
     	 {this.state.playersPlaying}

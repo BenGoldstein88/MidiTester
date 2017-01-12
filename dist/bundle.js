@@ -63,7 +63,7 @@
 /******/ 	}
 
 /******/ 	var hotApplyOnUpdate = true;
-/******/ 	var hotCurrentHash = "43aae1cd7f18f8591c30"; // eslint-disable-line no-unused-vars
+/******/ 	var hotCurrentHash = "46100ff9dd9e0d72288e"; // eslint-disable-line no-unused-vars
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentParents = []; // eslint-disable-line no-unused-vars
 
@@ -8770,19 +8770,21 @@
 	    // this.doTimeout = this.doTimeout.bind(this)
 	    // this.playNote = this.playNote.bind(this)
 	    // this.stopPlayerWithTimeout = this.stopPlayerWithTimeout.bind(this)
-	    _this.handleStartPlayer = _this.handleStartPlayer.bind(_this);
-	    _this.handleStopPlayer = _this.handleStopPlayer.bind(_this);
+	    // this.handleStartPlayer = this.handleStartPlayer.bind(this);
+	    // this.handleStopPlayer = this.handleStopPlayer.bind(this);
+	    _this.selfDestruct = _this.selfDestruct.bind(_this);
 	    return _this;
 	  }
 
 	  _createClass(VideoPlayer, [{
 	    key: 'componentWillReceiveProps',
 	    value: function componentWillReceiveProps(nextProps) {
-	      console.log("nextProps: ", nextProps);
-	      this.setState({
-	        currentPitch: nextProps.currentPitch,
-	        playing: nextProps.playing
-	      });
+	      // console.log("nextProps: ", nextProps);
+	      // this.setState({
+	      //   currentPitch: nextProps.currentPitch,
+	      //   playing: nextProps.playing
+	      // })
+
 	    }
 	  }, {
 	    key: 'componentDidUpdate',
@@ -8795,33 +8797,55 @@
 	      //     playing: this.props.playing          
 	      //   })
 	      // }
-	      console.log("this.state.playing for " + this.props.playerNumber + ": ", this.state.playing);
-	      if (this.props.playing === true) {
-	        console.log("Playing!: ", this.state.playing);
-	        this.refs.videoPlayer.play();
-	      } else {
-	        console.log("Stopping!: ", this.state.playing);
-	        this.refs.videoPlayer.pause();
-	      }
+	      // console.log("this.state.playing for "+ this.props.playerNumber +": ", this.state.playing);
+	      // var component = this;
+	      // if(this.props.playing === true) {
+	      //   console.log( "Playing!: ", this.state.playing);
+	      //   this.refs.videoPlayer.play();
+	      //   setTimeout(function() {
+	      //     component.refs.videoPlayer.pause();
+	      //   }, component.props.playTime + 50)
+	      // } else {
+	      //   console.log("Stopping!: ", this.state.playing);
+	      //   this.refs.videoPlayer.pause();
+	      // }
 	    }
 	  }, {
 	    key: 'componentDidMount',
 	    value: function componentDidMount() {
-	      this.setState({
-	        currentPitch: this.props.currentPitch,
-	        playing: this.props.playing
-	      });
+	      // this.setState({
+	      //   currentPitch: this.props.noteInfo.pitch,
+	      //   playing: this.props.playing
+	      // })
+	      var component = this;
+
+	      // setTimeout(function() {
+	      component.refs.videoPlayer.play();
+	      // }, component.props.noteInfo.startTime)
+
+	      setTimeout(function () {
+	        component.refs.videoPlayer.pause();
+	        // component.setState({
+	        //   playing: false
+	        // })
+	        // component.props.handleStopPlayer(component);
+	        // component.selfDestruct();
+	      }, component.props.playTime + 100);
 	    }
 	  }, {
-	    key: 'handleStartPlayer',
-	    value: function handleStartPlayer() {
-	      this.refs.videoPlayer.play();
+	    key: 'selfDestruct',
+	    value: function selfDestruct() {
+	      this.props.handleSelfDestruct(this.props.playerNumber);
 	    }
-	  }, {
-	    key: 'handleStopPlayer',
-	    value: function handleStopPlayer() {
-	      this.refs.videoPlayer.pause();
-	    }
+
+	    // handleStartPlayer() {
+	    //   this.refs.videoPlayer.play();
+	    // }
+
+	    // handleStopPlayer() {
+	    //   this.refs.videoPlayer.pause();
+	    // }
+
 
 	    // stopPlayerWithTimeout(time) {
 	    //   setTimeout(function() {
@@ -8861,17 +8885,25 @@
 	  }, {
 	    key: 'render',
 	    value: function render() {
-	      if (this.props.currentPitch === '-1') {
+
+	      var adjustedPitch = this.props.noteInfo.pitch;
+	      if (adjustedPitch < 46 && adjustedPitch > -1) {
+	        adjustedPitch = adjustedPitch + 12;
+	      } else if (adjustedPitch > 70) {
+	        adjustedPitch = adjustedPitch - 12;
+	      }
+
+	      if (this.props.currentPitch === '-1' || this.props.playing === false) {
 	        var sourceString = '';
 	      } else {
-	        var sourceString = "/assets/videos/" + this.props.currentPitch + ".mp4";
+	        var sourceString = "/assets/videos/" + adjustedPitch + ".mp4";
 	      }
 
 	      return _react2.default.createElement(
 	        'video',
 	        { ref: 'videoPlayer', style: {
-	            height: '100px',
-	            width: '100px'
+	            height: '20px',
+	            width: '20px'
 	          } },
 	        _react2.default.createElement('source', { src: sourceString })
 	      );
@@ -12672,12 +12704,15 @@
 	    var _this = _possibleConstructorReturn(this, (Conductor.__proto__ || Object.getPrototypeOf(Conductor)).call(this, props));
 
 	    _this.state = {
+	      startPlay: false,
 	      playing: [true],
 	      playerCounter: 0,
+	      numPlayers: 9,
 	      numRows: 3,
 	      playersPerRow: 3,
 	      pitchHash: {},
 	      players: [],
+	      playersPlaying: [],
 	      noteHash: (_noteHash = {
 	        0: "C-2",
 	        1: "C#/Db-2",
@@ -12800,6 +12835,12 @@
 	    _this.startPlayer = _this.startPlayer.bind(_this);
 	    _this.stopPlayer = _this.stopPlayer.bind(_this);
 	    _this.togglePlayer = _this.togglePlayer.bind(_this);
+	    _this.handleSelfDestruct = _this.handleSelfDestruct.bind(_this);
+	    _this.splitPlayers = _this.splitPlayers.bind(_this);
+	    _this.preparePlayers = _this.preparePlayers.bind(_this);
+
+	    _this.playSong = _this.playSong.bind(_this);
+	    _this.loadPlayerWithTimeout = _this.loadPlayerWithTimeout.bind(_this);
 
 	    _this.handleStartPlayer = _this.handleStartPlayer.bind(_this);
 	    _this.handleStopPlayer = _this.handleStopPlayer.bind(_this);
@@ -12843,8 +12884,29 @@
 	    value: function componentDidUpdate(prevProps, prevState) {
 
 	      if (this.props.file !== null) {
-	        this.playMidiFile(this.props.file);
+	        // this.playMidiFile(this.props.file);
+	        this.playSong(this.props.file);
+	        // this.splitPlayers();
 	      }
+	    }
+	  }, {
+	    key: 'splitPlayers',
+	    value: function splitPlayers() {
+	      // var players = this.state.players;
+	      // var playersToRender = [];
+	      // var playerCount = 0;
+	      // for(var i = 0; i < players.length; i++) {
+	      //   if(playerCount < 10) {
+	      //     playersToRender.push(players[i]);
+	      //     playerCount++;
+	      //   } else {
+	      //     this.setState({
+	      //       players: players,
+	      //       startPlay: true
+	      //     })
+	      //     playerCount = 0;
+	      //   }
+	      // }
 	    }
 	  }, {
 	    key: 'formatMidiObject',
@@ -12932,8 +12994,8 @@
 	      return notes;
 	    }
 	  }, {
-	    key: 'playMidiFile',
-	    value: function playMidiFile(file) {
+	    key: 'preparePlayers',
+	    value: function preparePlayers(file) {
 
 	      var bufferedFile = this.toArrayBuffer(file);
 	      var mf = new _midifile2.default(bufferedFile);
@@ -12944,43 +13006,130 @@
 	      var playerCounter = 0;
 	      console.log("notesArray: ", notesArray);
 	      // var that = this;
+
+	      var players = [];
 	      for (var i = 0; i < notesArray.length; i++) {
-	        var pitch = notesArray[i].pitch;
-	        console.log("pitch: ", pitch);
+	        // var pitch = notesArray[i].pitch
+	        // console.log("pitch: ", pitch)
+
 
 	        // var playerNumber = this.findPlayer() || playerCounter;
 	        var playerNumber = playerCounter;
 
-	        playerCounter = playerCounter + 1;
+	        playerCounter++;
 
-	        this.setState({
-	          playerCounter: playerCounter
-	        });
+	        // this.setState({
+	        // 	playerCounter: playerCounter
+	        // })
 
-	        this.dispatchWorker(notesArray[i], playerNumber);
-	        //   var noteStartTime = notesArray[i].startTime
-
-	        //   that.doTimeout(noteStartTime, pitch, that);
-
-
-	        // FOR EACH NOTE
-	        // Determine how long to wait before passing the note to the player
-	        // Determine which player to put the note in
-	        // Put the note in the player
-
-
-	        // FOR NOW, PROOF OF CONCEPT
-	        // Put note in a player
-	        // Cycle to the next player
-	        // If rowEnd, go to next Row and reset PlayerCounter to 0
-
-	        // this.state.pitchList[rowCounter][playerCounter] = pitch
-
+	        var loadedPlayer = this.loadPlayer(notesArray[i], playerNumber);
+	        players.push(loadedPlayer);
 	      }
 
+	      // this.setState({
+	      //   players: players,
+	      //   startPlay: false
+	      // })
+
 	      this.props.resetFile();
+	      return players;
+	    }
+	  }, {
+	    key: 'playSong',
+	    value: function playSong(file) {
+	      var players = this.preparePlayers(file);
+
+	      for (var i = 0; i < players.length; i++) {
+	        this.loadPlayerWithTimeout(players[i]);
+	      }
+	    }
+	  }, {
+	    key: 'loadPlayerWithTimeout',
+	    value: function loadPlayerWithTimeout(player) {
+	      var component = this;
+	      var playersPlaying = this.state.playersPlaying;
+	      playersPlaying.push(player);
+	      var arrayIndex = playersPlaying[playersPlaying.length - 1];
+	      setTimeout(function () {
+	        console.log("loading player #: " + player.props.playerNumber + " @ array location " + arrayIndex + " with delay of " + player.props.noteInfo.startTime);
+	        component.setState({
+	          playersPlaying: playersPlaying
+	        });
+	      }, player.props.noteInfo.startTime);
+	    }
+	  }, {
+	    key: 'handleStopPlayer',
+	    value: function handleStopPlayer(videoPlayer) {
+	      var playersPlaying = this.state.playersPlaying;
+	      var indexToDelete = -1;
+	      for (var i = 0; i < playersPlaying.length; i++) {
+	        var player = playersPlaying[i];
+	        if (player.props.playerNumber === videoPlayer.props.playerNumber) {
+	          indexToDelete = i;
+	          console.log("indexToDelete: ", indexToDelete);
+	        }
+	      }
+
+	      if (indexToDelete > -1) {
+	        delete playersPlaying[i];
+	      }
+
+	      this.setState({
+	        playersPlaying: playersPlaying
+	      });
+
+	      return null;
+	    }
+	  }, {
+	    key: 'playMidiFile',
+	    value: function playMidiFile(file) {
+	      var players = this.preparePlayers(file);
+	      console.log("players: ", players);
+
+	      var component = this;
+
+	      var playersPlaying = [];
+	      var overflow = 0;
+
+	      var timeNow = performance.now();
+
+	      for (var i = 0; i < players.length; i++) {
+	        if (overflow > 2000) {
+	          return;
+	        }
+
+	        var player = players[i];
+	        var playersPlayingState = component.state.playersPlaying;
+	        console.log("playersPlayingState: ", playersPlayingState);
+	        console.log("playersPlayingState.length: ", playersPlayingState.length);
+
+	        if (playersPlayingState.length < 9) {
+	          // console.log("this.state.playersPlaying.length: ", this.state.playersPlaying.length);
+	          overflow = 0;
+	          playersPlaying.push(player);
+	          console.log("playersPlaying: ", playersPlaying);
+	          // console.log("component: ", component);
+	          // component.setState({
+	          //   playersPlaying: playersPlaying
+	          // })
+	          component.manualPlayersRefesh(playersPlaying);
+	        } else {
+	          i--;
+	          overflow++;
+	          console.log("overflow: ", overflow);
+	        }
+	      }
 
 	      // console.log("SUPERSTATE: ", this.state)
+	    }
+	  }, {
+	    key: 'manualPlayersRefesh',
+	    value: function manualPlayersRefesh(players) {
+	      console.log("Refreshing....: ");
+	      this.setState({
+	        playersPlaying: players
+	      });
+	      return null;
 	    }
 	  }, {
 	    key: 'dispatchWorker',
@@ -12989,27 +13138,57 @@
 	      // load the player JUST BEFORE start time, set its status to 'occupied'
 	      // wait until start-time to start the player
 	      // wait until end-time to pause the player AND set its status to 'empty'
-	      var timeUntilPlay = noteObject.startTime;
-	      var timeUntilLoad = Math.max(timeUntilPlay, 0);
-	      var timeUntilEnd = noteObject.endTime + 5;
 
-	      var component = this;
+
+	      this.loadPlayer(noteObject, playerNumber);
+	      // var timeUntilPlay = noteObject.startTime
+	      //  var timeUntilLoad = Math.max(timeUntilPlay, 0)
+	      // var timeUntilEnd = noteObject.endTime + 5
+
+
+	      // var component = this;
+
 	      // load player
-	      setTimeout(function () {
-	        component.loadPlayer(playerNumber, noteObject.pitch);
-	      }, timeUntilLoad);
+	      // setTimeout(function() {
+	      //  component.loadPlayer(noteObject, playerNumber);
+	      // }, timeUntilLoad)
 
 	      // // start player
 	      // setTimeout(function() {
-	      // 	component.startPlayer(playerNumber);
+	      //  component.startPlayer(playerNumber);
 	      // }, timeUntilPlay)
 
 
 	      // stop player
-	      setTimeout(function () {
-	        component.stopPlayer(playerNumber);
-	      }, timeUntilEnd);
+	      // setTimeout(function() {
+	      //  component.stopPlayer(playerNumber);
+	      // }, timeUntilEnd)
 
+	      return null;
+	    }
+	  }, {
+	    key: 'loadPlayer',
+	    value: function loadPlayer(noteObject, playerNumber) {
+	      // console.log("Loading Player: ", playerNumber);
+
+	      var playing = this.state.playing[playerNumber];
+	      var playTime = noteObject.endTime - noteObject.startTime;
+
+	      var videoPlayer = _react2.default.createElement(_VideoPlayer2.default, { handleStopPlayer: this.handleStopPlayer, key: playerNumber, noteInfo: noteObject, playing: true, playerNumber: playerNumber, playTime: playTime, handleSelfDestruct: this.handleSelfDestruct });
+
+	      return videoPlayer;
+	    }
+	  }, {
+	    key: 'handleSelfDestruct',
+	    value: function handleSelfDestruct(playerNumber) {
+
+	      var playersPlaying = this.state.playersPlaying;
+	      // players.splice(playerNumber, 1);
+	      delete playersPlaying[playerNumber];
+
+	      this.setState({
+	        playersPlaying: playersPlaying
+	      });
 	      return null;
 	    }
 	  }, {
@@ -13026,24 +13205,6 @@
 	          playing: playingState
 	        });
 	      }
-	      return null;
-	    }
-	  }, {
-	    key: 'loadPlayer',
-	    value: function loadPlayer(playerNumber, pitch) {
-	      // console.log("Loading Player: ", playerNumber);
-
-	      var playing = this.state.playing[playerNumber];
-
-	      var videoPlayer = _react2.default.createElement(_VideoPlayer2.default, { handleStartPlayer: this.handleStartPlayer, handleStopPlayer: this.handleStopPlayer, key: playerNumber, playing: true, playerNumber: playerNumber, currentPitch: pitch });
-	      var currentPlayers = this.state.players;
-
-	      currentPlayers[playerNumber] = videoPlayer;
-
-	      this.setState({
-	        players: currentPlayers
-	      });
-
 	      return null;
 	    }
 	  }, {
@@ -13068,18 +13229,19 @@
 	    value: function stopPlayer(playerNumber) {
 	      // this.refs['videoPlayer'+playerNumber].pause();
 	      console.log("Stopping Player: ", playerNumber);
-	      var videoPlayer = this.state.players[playerNumber];
+	      // var videoPlayer = this.state.players[playerNumber];
 	      // if(videoPlayer) {
-	      // 	var playingState = this.state.playing;
-	      // 	playingState[playerNumber] = false;
+	      //  var playingState = this.state.playing;
+	      //  playingState[playerNumber] = false;
 	      //    playingState.push(false);
 
-	      // 	this.setState({
-	      // 		playing: playingState
-	      // 	})
+	      //  this.setState({
+	      //    playing: playingState
+	      //  })
 	      // }
 	      var players = this.state.players;
 	      players.splice(playerNumber, 1);
+
 	      this.setState({
 	        players: players
 	      });
@@ -13096,14 +13258,9 @@
 	    }
 	  }, {
 	    key: 'handleStartPlayer',
-	    value: function handleStartPlayer(player) {
-	      player.refs.videoPlayer.play();
-	    }
-	  }, {
-	    key: 'handleStopPlayer',
-	    value: function handleStopPlayer(player) {
-	      player.refs.videoPlayer.pause();
-	    }
+	    value: function handleStartPlayer(playerNumber) {}
+	    // player.refs.videoPlayer.play();
+
 
 	    // <VideoPlayerGrid pitchHash={this.state.pitchHash} numRows={this.state.numRows} playersPerRow={this.state.playersPerRow}/>
 
@@ -13111,10 +13268,18 @@
 	    key: 'render',
 	    value: function render() {
 
+	      // var playersPlaying;
+
+	      // if(this.state.startPlay === true) {
+	      //   playersPlaying = this.state.playersPlaying;
+	      // } else {
+	      //   playersPlaying = <h4> 'playersPlaying go here' </h4>
+	      // }
+	      console.log("ReRendering: ");
 	      return _react2.default.createElement(
 	        'div',
 	        null,
-	        this.state.players
+	        this.state.playersPlaying
 	      );
 	    }
 	  }]);

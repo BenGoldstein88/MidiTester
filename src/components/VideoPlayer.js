@@ -10,7 +10,7 @@ export default class VideoPlayer extends React.Component {
 
     this.state = {
       currentPitch: '-1',
-      playing: false      
+      playing: true      
     }
     // this.doTimeout = this.doTimeout.bind(this)
     // this.playNote = this.playNote.bind(this)
@@ -37,8 +37,8 @@ export default class VideoPlayer extends React.Component {
       //     playing: this.props.playing          
       //   })
       // }
-      console.log("this.state.playing for "+ this.props.playerNumber +": ", this.state.playing);
-      var component = this;
+      // console.log("this.state.playing for "+ this.props.playerNumber +": ", this.state.playing);
+      // var component = this;
       // if(this.props.playing === true) {
       //   console.log( "Playing!: ", this.state.playing);
       //   this.refs.videoPlayer.play();
@@ -58,15 +58,26 @@ export default class VideoPlayer extends React.Component {
     // })
     var component = this;
 
-    setTimeout(function() {
-    component.refs.videoPlayer.play();
-    }, component.props.noteInfo.startTime)
+    if(this.state.playing === true) {
 
-    setTimeout(function() {
-      component.refs.videoPlayer.pause();
-      component.props.handleStopPlayer(component);
-      // component.selfDestruct();
-    }, component.props.noteInfo.endTime+100)
+      component.refs.videoPlayer.play();
+
+      setTimeout(function() {
+        component.refs.videoPlayer.pause();
+        component.setState({
+          playing: false
+        })
+        // component.setState({
+        //   playing: false
+        // })
+        // component.props.handleStopPlayer(component);
+        // component.selfDestruct();
+      }, component.props.playTime)
+      
+    }
+    // setTimeout(function() {
+    // }, component.props.noteInfo.startTime)
+
 
   }
 
@@ -128,19 +139,20 @@ export default class VideoPlayer extends React.Component {
       adjustedPitch = adjustedPitch - 12;
     }
 
-    if(this.props.currentPitch === '-1' || this.props.playing === false) {
+    if(this.props.currentPitch === '-1' || this.state.playing === false) {
       var sourceString = '';
+      var heightWidth = '5px';
 
 
     } else {
       var sourceString = "/assets/videos/" + adjustedPitch +".mp4";
-
+      var heightWidth = '25px';
     }
 
     return (
         <video ref={'videoPlayer'} style={{
-          height: '20px',
-          width: '20px'
+          height: heightWidth,
+          width: heightWidth
         }} >
           <source src={sourceString} />
         </video>
