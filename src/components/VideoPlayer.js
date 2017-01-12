@@ -15,8 +15,8 @@ export default class VideoPlayer extends React.Component {
     // this.doTimeout = this.doTimeout.bind(this)
     // this.playNote = this.playNote.bind(this)
     // this.stopPlayerWithTimeout = this.stopPlayerWithTimeout.bind(this)
-    this.handleStartPlayer = this.handleStartPlayer.bind(this);
-    this.handleStopPlayer = this.handleStopPlayer.bind(this);
+    // this.handleStartPlayer = this.handleStartPlayer.bind(this);
+    // this.handleStopPlayer = this.handleStopPlayer.bind(this);
     this.selfDestruct = this.selfDestruct.bind(this);
   }
 
@@ -58,17 +58,15 @@ export default class VideoPlayer extends React.Component {
     // })
     var component = this;
 
-
     setTimeout(function() {
-      component.refs.videoPlayer.play();
-
-
+    component.refs.videoPlayer.play();
     }, component.props.noteInfo.startTime)
 
     setTimeout(function() {
       component.refs.videoPlayer.pause();
-      component.selfDestruct();
-    }, component.props.noteInfo.endTime)
+      component.props.handleStopPlayer(component);
+      // component.selfDestruct();
+    }, component.props.noteInfo.endTime+100)
 
   }
 
@@ -76,13 +74,13 @@ export default class VideoPlayer extends React.Component {
     this.props.handleSelfDestruct(this.props.playerNumber);
   }
 
-  handleStartPlayer() {
-    this.refs.videoPlayer.play();
-  }
+  // handleStartPlayer() {
+  //   this.refs.videoPlayer.play();
+  // }
 
-  handleStopPlayer() {
-    this.refs.videoPlayer.pause();
-  }
+  // handleStopPlayer() {
+  //   this.refs.videoPlayer.pause();
+  // }
 
 
 
@@ -125,17 +123,17 @@ export default class VideoPlayer extends React.Component {
 
     var adjustedPitch = this.props.noteInfo.pitch;
     if(adjustedPitch < 46 && adjustedPitch > -1) {
-      adjustedPitch = adjustedPitch + 12
+      adjustedPitch = adjustedPitch + 12;
     } else if(adjustedPitch > 70) {
-      adjustedPitch = adjustedPitch - 12
+      adjustedPitch = adjustedPitch - 12;
     }
 
-    if(this.props.currentPitch === '-1') {
+    if(this.props.currentPitch === '-1' || this.props.playing === false) {
       var sourceString = '';
 
 
     } else {
-      var sourceString = "/assets/videos/" + adjustedPitch +".mp4"
+      var sourceString = "/assets/videos/" + adjustedPitch +".mp4";
 
     }
 

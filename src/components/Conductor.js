@@ -11,12 +11,15 @@ export default class Conductor extends React.Component {
     super(props);
 
     this.state = {
+      startPlay: false,
     	playing: [true],
     	playerCounter: 0,
+      numPlayers: 9,
 		  numRows: 3,
 	   	playersPerRow: 3,
 	    pitchHash: {},
 	    players: [],
+      playersPlaying: [],
     	noteHash: {
 	        0: "C-2",
 	        1: "C#/Db-2",
@@ -156,6 +159,8 @@ export default class Conductor extends React.Component {
     this.stopPlayer = this.stopPlayer.bind(this);
     this.togglePlayer = this.togglePlayer.bind(this);
     this.handleSelfDestruct = this.handleSelfDestruct.bind(this);
+    this.splitPlayers = this.splitPlayers.bind(this);
+    this.preparePlayers = this.preparePlayers.bind(this);
 
     this.handleStartPlayer = this.handleStartPlayer.bind(this);
     this.handleStopPlayer = this.handleStopPlayer.bind(this);
@@ -193,8 +198,27 @@ export default class Conductor extends React.Component {
 
   	if(this.props.file !== null) {
   		this.playMidiFile(this.props.file);
+      // this.splitPlayers();
   	}
 
+  }
+
+  splitPlayers() {
+    // var players = this.state.players;
+    // var playersToRender = [];
+    // var playerCount = 0;
+    // for(var i = 0; i < players.length; i++) {
+    //   if(playerCount < 10) {
+    //     playersToRender.push(players[i]);
+    //     playerCount++;
+    //   } else {
+    //     this.setState({
+    //       players: players,
+    //       startPlay: true
+    //     })
+    //     playerCount = 0;
+    //   }
+    // }
   }
 
   formatMidiObject(midifile) {
@@ -285,7 +309,8 @@ export default class Conductor extends React.Component {
     return notes;
 
   }
-  playMidiFile(file) {
+
+  preparePlayers(file) {
 
     var bufferedFile = this.toArrayBuffer(file)
     var mf = new MIDIFile(bufferedFile)
@@ -300,46 +325,71 @@ export default class Conductor extends React.Component {
 
     var players = [];
     for(var i = 0; i < notesArray.length; i++) {
-      var pitch = notesArray[i].pitch
-      console.log("pitch: ", pitch)
+      // var pitch = notesArray[i].pitch
+      // console.log("pitch: ", pitch)
 
 
       // var playerNumber = this.findPlayer() || playerCounter;
       var playerNumber = playerCounter;
 
-      playerCounter = playerCounter + 1;
 
-      this.setState({
-      	playerCounter: playerCounter
-      })
+      playerCounter++;
+
+      // this.setState({
+      // 	playerCounter: playerCounter
+      // })
 
       var loadedPlayer = this.loadPlayer(notesArray[i], playerNumber);
-      players[playerNumber] = loadedPlayer;
-    //   var noteStartTime = notesArray[i].startTime
+      players.push(loadedPlayer);
 
-    //   that.doTimeout(noteStartTime, pitch, that);
-
-
-    // FOR EACH NOTE
-      // Determine how long to wait before passing the note to the player
-      // Determine which player to put the note in
-      // Put the note in the player
-
-
-    // FOR NOW, PROOF OF CONCEPT
-      // Put note in a player
-      // Cycle to the next player
-      // If rowEnd, go to next Row and reset PlayerCounter to 0
-
-      // this.state.pitchList[rowCounter][playerCounter] = pitch
 
     }
 
-    this.setState({
-      players: players
-    })
+    // this.setState({
+    //   players: players,
+    //   startPlay: false
+    // })
 
     this.props.resetFile();
+    return players;
+
+  }
+
+  playMidiFile(file) {
+    var players = this.preparePlayers(file);
+    console.log("players: ", players);
+
+    var component = this;
+
+    var playersPlaying = [];
+    var overflow = 0;
+
+    var timeNow = performance.now();
+
+    for(var i = 0; i < players.length; i++) {
+      if(overflow > 2000){ return }
+
+      var player = players[i];
+      var playersPlayingState = component.state.playersPlaying;
+      console.log("playersPlayingState: ", playersPlayingState);
+      console.log("playersPlayingState.length: ", playersPlayingState.length);
+
+      if(playersPlayingState.length < 9) {
+        // console.log("this.state.playersPlaying.length: ", this.state.playersPlaying.length);
+        overflow = 0;
+        playersPlaying.push(player);
+        console.log("playersPlaying: ", playersPlaying);
+        // console.log("component: ", component);
+        component.setState({
+          playersPlaying: playersPlaying
+        })
+      } else {
+        i--;
+        overflow++;
+        console.log("overflow: ", overflow);
+      }
+
+    }
 
     // console.log("SUPERSTATE: ", this.state)
 
@@ -388,8 +438,9 @@ export default class Conductor extends React.Component {
     var playing = this.state.playing[playerNumber];
     var playTime = noteObject.endTime - noteObject.startTime;
 
-  	var videoPlayer = <VideoPlayer key={playerNumber} noteInfo={noteObject} playing={true} playerNumber={playerNumber} playTime={playTime} handleSelfDestruct={this.handleSelfDestruct}/>
 
+
+  	var videoPlayer = <VideoPlayer handleStopPlayer={this.handleStopPlayer} key={playerNumber} noteInfo={noteObject} playing={true} playerNumber={playerNumber} playTime={playTime} handleSelfDestruct={this.handleSelfDestruct}/>
 
   	return videoPlayer;
   }
@@ -397,7 +448,6 @@ export default class Conductor extends React.Component {
   handleSelfDestruct(playerNumber) {
 
     var players = this.state.players;
-    console.log("players: ", players);
     // players.splice(playerNumber, 1);
     delete players[playerNumber];
 
@@ -405,6 +455,7 @@ export default class Conductor extends React.Component {
     this.setState({
       players: players
     })
+    return null;
 
   }
 
@@ -472,20 +523,75 @@ export default class Conductor extends React.Component {
   	return null;
   }
 
-  handleStartPlayer(player) {
-  	player.refs.videoPlayer.play();
+  handleStartPlayer(playerNumber) {
+  	// player.refs.videoPlayer.play();
   }
 
-  handleStopPlayer(player) {
-  	player.refs.videoPlayer.pause();
+  handleStopPlayer(videoPlayer) {
+    var playersPlaying = this.state.playersPlaying;
+    // console.log("playersPlaying: ", playersPlaying);
+    // console.log("videoPlayer: ", videoPlayer);
+    // delete playersPlaying[playerNumber];
+    // var indexToDelete = -1;
+    // for(var i = 0; i < playersPlaying.length; i++) {
+    //   // console.log("playersPlaying[i]: ", playersPlaying[i]);
+    //   var player = playersPlaying[i];
+    //   if(player.props.playerNumber === playerNumber) {
+    //     var indexToDelete = i;
+    //     console.log("indexToDelete: ", indexToDelete);
+    //   }
+    // }
+    // if(indexToDelete > -1) {
+    //   playersPlaying.splice(indexToDelete, 1);
+    // }
+
+
+    // var updatedPlayers = playersPlaying.map(function(player){
+    //     if(player.props.playerNumber !== videoPlayer.props.playerNumber) {
+    //       return player;
+    //     }
+    // })
+
+    var updatedPlayers = [];
+
+    for(var i = 0; i < playersPlaying.length; i++) {
+      var player = playersPlaying[i];
+      var playerNumber = player.props.playerNumber;
+      console.log("playerNumber: ", playerNumber);
+    }
+
+    console.log("break________");
+
+    console.log("updatedPlayers: ", updatedPlayers);
+    // var indexToDelete = playersPlaying.indexOf(videoPlayer) || -1;
+    // // console.log("playersPlaying: ", playersPlaying);
+    // console.log("indexToDelete: ", indexToDelete);
+
+    // if(indexToDelete > -1) {
+    //   delete playersPlaying(indexToDelete);
+    // }
+
+    this.setState({
+      playersPlaying: updatedPlayers
+    })
+
+    return null;
   }
 
       	// <VideoPlayerGrid pitchHash={this.state.pitchHash} numRows={this.state.numRows} playersPerRow={this.state.playersPerRow}/>
   render() {
 
+    // var playersPlaying;
+
+    // if(this.state.startPlay === true) {
+    //   playersPlaying = this.state.playersPlaying;
+    // } else {
+    //   playersPlaying = <h4> 'playersPlaying go here' </h4>
+    // }
+    console.log("ReRendering: ");
     return (
       <div>
-      	{this.state.players}
+    	 {this.state.playersPlaying}
       </div>
     );
   }
