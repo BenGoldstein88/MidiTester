@@ -6,10 +6,14 @@
 * visit `http://localhost:8080/`
 
 
-###PROBLEMS
+* CLICK 'Select a File'
+* SELECT a .mid file from the 'assets' directory under 'sounds'
+* CLICK 'Load Players'. This will prepare the page to play the song.
+* CLICK 'Initiate Song'
 
-* while visiting localhost, click "test" to reveal the error in the console
-* the same error occurs if you run 'node src/midistuff/sample.js' from the command line
+*Check the console for some information on the midi processing and player setup.
+
+###PROBLEMS
 
 
 

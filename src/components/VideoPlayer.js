@@ -25,8 +25,7 @@ export default class VideoPlayer extends React.Component {
     // this.setState({
     //   currentPitch: nextProps.currentPitch,
     //   playing: nextProps.playing
-    // })
-    
+    // })    
   }
   componentDidUpdate(prevProps, prevState) {
     // console.log(prevProps, prevState)
@@ -63,16 +62,16 @@ export default class VideoPlayer extends React.Component {
       component.refs.videoPlayer.play();
 
       setTimeout(function() {
-        component.refs.videoPlayer.pause();
+        // component.refs.videoPlayer.pause();
         component.setState({
           playing: false
         })
         // component.setState({
         //   playing: false
         // })
-        // component.props.handleStopPlayer(component);
-        // component.selfDestruct();
-      }, component.props.playTime)
+        component.props.handleStopPlayer(component);
+        // component.props.handleStopPlayer();
+      }, component.props.playTime+600)
       
     }
     // setTimeout(function() {
@@ -133,11 +132,14 @@ export default class VideoPlayer extends React.Component {
   render() {
 
     var adjustedPitch = this.props.noteInfo.pitch;
-    if(adjustedPitch < 46 && adjustedPitch > -1) {
-      adjustedPitch = adjustedPitch + 12;
-    } else if(adjustedPitch > 70) {
-      adjustedPitch = adjustedPitch - 12;
-    }
+    if(adjustedPitch > -1) {
+      while(adjustedPitch < 46) {
+        adjustedPitch = adjustedPitch + 12;
+      }
+      while(adjustedPitch > 70) {
+        adjustedPitch = adjustedPitch - 12;
+      }
+    } 
 
     if(this.props.currentPitch === '-1' || this.state.playing === false) {
       var sourceString = '';

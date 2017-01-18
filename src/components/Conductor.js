@@ -1,6 +1,7 @@
 import React from 'react';
-import VideoPlayerGrid from './VideoPlayerGrid';
+// import VideoPlayerGrid from './VideoPlayerGrid';
 import VideoPlayer from './VideoPlayer';
+import VideoPlayerContainer from './VideoPlayerContainer';
 import MIDIFileHeader from '../midistuff/MIDIFileHeader';
 import MIDIFile from 'midifile';
 
@@ -9,7 +10,6 @@ export default class Conductor extends React.Component {
 
   constructor(props) {
     super(props);
-
     this.state = {
       startPlay: false,
     	playing: [true],
@@ -395,13 +395,16 @@ export default class Conductor extends React.Component {
       var player = playersPlaying[i];
       if(player.props.playerNumber === videoPlayer.props.playerNumber) {
         indexToDelete = i;
-        console.log("indexToDelete: ", indexToDelete);
       }
     }
 
+    console.log("indexToDelete: ", indexToDelete);
     if(indexToDelete > -1) {
-      delete playersPlaying[i]
+      playersPlaying.splice(indexToDelete, 1);
+
     }
+
+    console.log("playersPlaying: ", playersPlaying);
 
     this.setState({
       playersPlaying: playersPlaying
@@ -505,6 +508,8 @@ export default class Conductor extends React.Component {
 
 
     var videoPlayer = <VideoPlayer handleStopPlayer={this.handleStopPlayer} key={playerNumber} noteInfo={noteObject} playing={true} playerNumber={playerNumber} playTime={playTime} handleSelfDestruct={this.handleSelfDestruct}/>
+
+    // var videoPlayer = <VideoPlayerContainer handleStopPlayer={this.handleStopPlayer} key={playerNumber} noteInfo={noteObject} playing={true} playerNumber={playerNumber} playTime={playTime} handleSelfDestruct={this.handleSelfDestruct}/>
 
     return videoPlayer;
   }
